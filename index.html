@@ -1,213 +1,412 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Устный тест — УК РО, КоАП РО, Процессуальный кодекс</title>
   <style>
+    /* ============ ТЕМЫ ============ */
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #1e293b;
+      --bg-input: #0f172a;
+      --border: #334155;
+      --border-hover: #475569;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #2563eb;
+      --gold: #facc15;
+      --green: #22c55e;
+      --red: #ef4444;
+      --shadow: 0 8px 24px rgba(0,0,0,0.35);
+      --selected-bg: #0c2a45;
+      --option-hover: #1a2740;
+      --gradient: linear-gradient(135deg, #0ea5e9, #2563eb);
+    }
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --bg-soft: #ffffff;
+      --bg-input: #f8fafc;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #0284c7;
+      --accent-2: #1d4ed8;
+      --gold: #b45309;
+      --green: #16a34a;
+      --red: #dc2626;
+      --shadow: 0 8px 24px rgba(15,23,42,0.08);
+      --selected-bg: #e0f2fe;
+      --option-hover: #f1f5f9;
+      --gradient: linear-gradient(135deg, #0284c7, #1d4ed8);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 30px 20px;
+      background: var(--bg);
+      color: var(--text);
+      padding: 30px 20px 60px;
+      transition: background 0.35s, color 0.35s;
+      min-height: 100vh;
     }
-    .container { max-width: 860px; margin: 0 auto; }
-    h1 {
-      text-align: center;
-      font-size: 26px;
-      margin-bottom: 10px;
-      color: #38bdf8;
-      letter-spacing: 0.5px;
-    }
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    .card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 28px 30px;
+    .container { max-width: 880px; margin: 0 auto; }
+
+    /* ============ ШАПКА ============ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-      border: 1px solid #334155;
+    }
+    .theme-toggle {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, border-color 0.2s, background 0.3s;
+    }
+    .theme-toggle:hover { transform: translateY(-2px) rotate(8deg); border-color: var(--accent); }
+    .theme-toggle:active { transform: scale(0.94); }
+
+    h1 {
+      font-size: 28px;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.3px;
+    }
+    .subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+    /* ============ КАРТОЧКИ ============ */
+    .card {
+      background: var(--bg-soft);
+      border-radius: 16px;
+      padding: 28px 30px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: background 0.35s, border-color 0.35s;
+      animation: fadeUp 0.45s cubic-bezier(.22,.8,.35,1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .card h2 {
       font-size: 18px;
-      color: #facc15;
+      color: var(--gold);
       margin-bottom: 20px;
-      border-bottom: 1px solid #334155;
-      padding-bottom: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
     label {
       display: block;
       margin-bottom: 8px;
       font-weight: 600;
       font-size: 14px;
-      color: #cbd5e1;
+      color: var(--text);
     }
     input[type="text"], input[type="file"] {
       width: 100%;
-      padding: 11px 14px;
+      padding: 12px 14px;
       margin-bottom: 18px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #e2e8f0;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text);
       font-size: 14px;
       outline: none;
-      transition: border 0.2s;
+      transition: border 0.2s, box-shadow 0.2s, background 0.35s;
     }
-    input[type="text"]:focus { border-color: #38bdf8; }
-    input[type="file"] { padding: 8px; color: #94a3b8; }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+    }
+    input[type="file"] { padding: 8px; color: var(--text-muted); }
     input[type="file"]::file-selector-button {
-      background: #334155;
+      background: var(--border);
       border: none;
-      color: #e2e8f0;
+      color: var(--text);
       padding: 7px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       margin-right: 12px;
       font-size: 13px;
+      transition: background 0.15s;
     }
-    input[type="file"]::file-selector-button:hover { background: #475569; }
+    input[type="file"]::file-selector-button:hover { background: var(--border-hover); }
+
+    /* ============ КНОПКИ ============ */
     .btn {
       display: inline-block;
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      background: var(--gradient);
       color: #fff;
       border: none;
-      padding: 14px 34px;
+      padding: 14px 36px;
       font-size: 16px;
       font-weight: 700;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       letter-spacing: 0.4px;
-      transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 14px rgba(14,165,233,0.4);
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s, opacity 0.15s;
+      box-shadow: 0 6px 18px rgba(14,165,233,0.35);
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(14,165,233,0.55); }
-    .btn:active { transform: translateY(0); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(0) scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .btn-center { text-align: center; margin-top: 10px; }
+
     .hidden { display: none !important; }
+
+    /* ============ ПРОГРЕСС ШАГОВ ============ */
+    .step-header {
+      background: var(--bg-soft);
+      border-radius: 14px;
+      padding: 16px 22px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .step-header .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .step-header .row strong { color: var(--accent); }
+    .step-bar {
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .step-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gradient);
+      border-radius: 999px;
+      transition: width 0.4s cubic-bezier(.22,.8,.35,1);
+    }
+
+    /* ============ ВОПРОС (по одному) ============ */
     .question {
-      background: #1e293b;
-      border-radius: 12px;
-      padding: 20px 22px;
-      margin-bottom: 16px;
-      border: 1px solid #334155;
+      background: var(--bg-soft);
+      border-radius: 16px;
+      padding: 26px 28px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transition: background 0.35s, border-color 0.35s;
     }
-    .question .q-title {
-      font-weight: 700;
-      margin-bottom: 14px;
-      font-size: 15px;
-      color: #f1f5f9;
-      line-height: 1.5;
+    .question.enter {
+      animation: questionIn 0.45s cubic-bezier(.22,.8,.35,1) both;
     }
-    .question .q-title span.num {
-      display: inline-block;
-      background: #38bdf8;
-      color: #0f172a;
-      width: 26px;
-      height: 26px;
-      line-height: 26px;
-      text-align: center;
-      border-radius: 50%;
-      font-size: 13px;
-      margin-right: 8px;
+    .question.leave {
+      animation: questionOut 0.22s ease-in both;
+    }
+    @keyframes questionIn {
+      from { opacity: 0; transform: translateX(40px) scale(0.98); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
+    }
+    @keyframes questionOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(-40px); }
+    }
+
+    .q-part {
+      font-size: 12.5px;
       font-weight: 800;
+      color: var(--gold);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
     }
+    .q-title {
+      font-weight: 700;
+      margin-bottom: 20px;
+      font-size: 16.5px;
+      color: var(--text);
+      line-height: 1.5;
+      display: flex;
+      gap: 12px;
+    }
+    .q-title .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient);
+      color: #fff;
+      min-width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      font-size: 14px;
+      font-weight: 800;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(14,165,233,0.35);
+    }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
     .option {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 10px 14px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      background: #0f172a;
-      border: 1px solid #334155;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--bg-input);
+      border: 2px solid var(--border);
       cursor: pointer;
-      transition: background 0.15s, border 0.15s;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
       font-size: 14px;
       line-height: 1.45;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: optionIn 0.4s cubic-bezier(.22,.8,.35,1) forwards;
     }
-    .option:hover { background: #1a2740; border-color: #475569; }
+    @keyframes optionIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .option:hover { background: var(--option-hover); border-color: var(--border-hover); transform: translateY(-1px); }
+    .option:active { transform: scale(0.99); }
     .option input[type="radio"] {
       margin-top: 3px;
-      accent-color: #38bdf8;
-      width: 17px;
-      height: 17px;
+      accent-color: var(--accent);
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
       cursor: pointer;
     }
-    .option.selected { background: #0c2a45; border-color: #38bdf8; }
-    .part-title {
-      font-size: 17px;
+    .option.selected {
+      background: var(--selected-bg);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(56,189,248,0.18);
+      transform: translateY(-1px) scale(1.005);
+    }
+    .option.selected .letter {
+      background: var(--accent);
+      color: #fff;
+    }
+    .option .letter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border-radius: 7px;
+      background: var(--border);
+      color: var(--text);
       font-weight: 800;
-      color: #facc15;
-      margin: 26px 0 14px;
-      padding-left: 10px;
-      border-left: 4px solid #facc15;
+      font-size: 12.5px;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
     }
+
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .nav-row .btn { padding: 13px 30px; }
+    .nav-row .btn-back {
+      background: transparent;
+      color: var(--text-muted);
+      border: 2px solid var(--border);
+      box-shadow: none;
+    }
+    .nav-row .btn-back:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+    /* ============ РЕЗУЛЬТАТ ============ */
     .result-card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 30px;
-      border: 1px solid #334155;
+      background: var(--bg-soft);
+      border-radius: 16px;
+      padding: 34px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       text-align: center;
+      animation: fadeUp 0.5s cubic-bezier(.22,.8,.35,1) both;
+      transition: background 0.35s, border-color 0.35s;
     }
+    .result-card h2 { color: var(--gold); margin-bottom: 8px; }
     .result-card .score {
-      font-size: 46px;
+      font-size: 52px;
       font-weight: 900;
-      color: #38bdf8;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       margin: 10px 0;
     }
-    .result-card .grade {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
+    .result-card .grade { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
     .review-item {
       text-align: left;
-      background: #0f172a;
-      border-radius: 8px;
-      padding: 12px 16px;
+      background: var(--bg-input);
+      border-radius: 10px;
+      padding: 14px 18px;
       margin-bottom: 10px;
-      border: 1px solid #334155;
+      border: 1px solid var(--border);
       font-size: 13.5px;
       line-height: 1.5;
+      animation: fadeUp 0.4s ease both;
     }
-    .review-item.correct { border-left: 5px solid #22c55e; }
-    .review-item.wrong { border-left: 5px solid #ef4444; }
-    .review-item .ans { color: #94a3b8; }
-    .review-item .ans b.correct-txt { color: #22c55e; }
-    .review-item .ans b.wrong-txt { color: #ef4444; }
+    .review-item.correct { border-left: 5px solid var(--green); }
+    .review-item.wrong { border-left: 5px solid var(--red); }
+    .review-item .ans { color: var(--text-muted); margin-top: 4px; }
+    .review-item .ans b.correct-txt { color: var(--green); }
+    .review-item .ans b.wrong-txt { color: var(--red); }
+
+    .status-msg {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 18px;
+      min-height: 22px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .status-msg.ok { color: var(--green); }
+    .status-msg.err { color: var(--red); }
+    .status-msg.loading { color: var(--gold); }
+
     .warning {
-      color: #f87171;
+      color: var(--red);
       font-size: 13px;
       margin-top: -10px;
       margin-bottom: 12px;
       display: none;
     }
-    .status-msg {
-      text-align: center;
-      font-size: 14px;
-      margin-top: 16px;
-      min-height: 20px;
-    }
-    .status-msg.ok { color: #22c55e; }
-    .status-msg.err { color: #ef4444; }
-    .status-msg.loading { color: #facc15; }
+
     .progress-bar {
       position: fixed;
       top: 0; left: 0;
       height: 4px;
-      background: linear-gradient(90deg, #38bdf8, #2563eb);
+      background: var(--gradient);
       width: 0%;
       z-index: 999;
       transition: width 0.1s;
+    }
+
+    /* ============ МОБИЛЬНАЯ АДАПТАЦИЯ ============ */
+    @media (max-width: 600px) {
+      body { padding: 18px 12px 40px; }
+      h1 { font-size: 22px; }
+      .card, .question, .result-card { padding: 20px 16px; }
+      .nav-row { flex-direction: column-reverse; }
+      .nav-row .btn { width: 100%; }
+      .result-card .score { font-size: 40px; }
+      .q-title { font-size: 15px; }
     }
   </style>
 </head>
@@ -215,16 +414,22 @@
 <div class="progress-bar" id="progressBar"></div>
 <div class="container">
 
-  <h1>Устный тест</h1>
-  <p class="subtitle">УК РО · КоАП РО · Процессуальный кодекс РО — 30 вопросов</p>
+  <div class="top-bar">
+    <div>
+      <h1>Устный тест</h1>
+      <p class="subtitle">УК РО · КоАП РО · Процессуальный кодекс РО — 30 вопросов</p>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="Сменить тему" onclick="toggleTheme()">🌙</button>
+  </div>
 
+  <!-- ЭКРАН 1: Регистрация -->
   <div id="screen-auth">
     <div class="card">
       <h2>📋 Данные сотрудника</h2>
-      <label for="surname">Фамилия *</label>
-      <input type="text" id="surname" placeholder="Введите фамилию" autocomplete="off">
       <label for="name">Имя *</label>
       <input type="text" id="name" placeholder="Введите имя" autocomplete="off">
+      <label for="surname">Фамилия *</label>
+      <input type="text" id="surname" placeholder="Введите фамилию" autocomplete="off">
       <label for="static">Статик *</label>
       <input type="text" id="static" placeholder="Введите статик (например: 123-456)" autocomplete="off">
       <label for="fileUdo">Скрин удостоверения (УДО) *</label>
@@ -238,27 +443,29 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 2: Тест (по одному вопросу) -->
   <div id="screen-test" class="hidden">
-    <div class="card" style="padding: 18px 24px;">
-      <span style="color:#94a3b8; font-size:14px;">Сотрудник: </span>
-      <strong id="userLabel" style="color:#38bdf8;"></strong>
-      <span style="float:right; color:#94a3b8; font-size:14px;" id="answeredCount">Отвечено: 0 / 30</span>
+    <div class="step-header">
+      <div class="row">
+        <span>Сотрудник: <strong id="userLabel"></strong></span>
+        <span>Вопрос <strong id="stepNum">1</strong> из <strong id="stepTotal">30</strong></span>
+      </div>
+      <div class="step-bar"><div class="step-bar-fill" id="stepFill"></div></div>
     </div>
-    <form id="testForm"></form>
-    <div class="btn-center" style="margin-bottom: 40px;">
-      <button class="btn" id="finishBtn" onclick="finishTest()">Завершить тест</button>
-    </div>
+
+    <div id="questionWrap"></div>
   </div>
 
+  <!-- ЭКРАН 3: Результат -->
   <div id="screen-result" class="hidden">
     <div class="result-card">
-      <h2 style="color:#facc15; margin-bottom:8px;">Результат теста</h2>
-      <div style="color:#94a3b8; font-size:14px;" id="resultUser"></div>
+      <h2>Результат теста</h2>
+      <div style="color:var(--text-muted); font-size:14px;" id="resultUser"></div>
       <div class="score" id="scoreDisplay"></div>
       <div class="grade" id="gradeDisplay"></div>
       <div class="status-msg" id="discordStatus"></div>
-      <div id="reviewList" style="margin-top: 26px;"></div>
-      <div class="btn-center" style="margin-top: 24px;">
+      <div id="reviewList" style="margin-top: 28px;"></div>
+      <div class="btn-center" style="margin-top: 26px;">
         <button class="btn" onclick="location.reload()">Пройти заново</button>
       </div>
     </div>
@@ -269,180 +476,258 @@
 <script>
 /* =====================================================================
    ⚙️ НАСТРОЙКА
-   1) DISCORD_WEBHOOK_URL — URL webhook вашего канала
-   2) INTERACTION_ENDPOINT — URL вашего Cloudflare Worker (см. инструкцию)
-      Если не настроен — кнопки будут, но нажатие не обработается.
    ===================================================================== */
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1568753176629350452/emztUgE0fPyxiB8H4uQ3UDrg835QjvbQSLq5aUKribYgKxH7aarGKlV4ax5DbhHvTWlG";
-const INTERACTION_ENDPOINT = "ВСТАВЬТЕ_СЮДА_URL_ОБРАБОТЧИКА"; // необязательно для отправки
+
+/* Кого уведомлять (пинг) — Discord ID пользователя.
+   Несколько — через запятую. Пусто "" — никого не пингуем. */
+const NOTIFY_USER_ID = "657932083410239488,535387398587154442,1354521931914805429";
 /* ===================================================================== */
 
+/* ==================== ДАННЫЕ ВОПРОСОВ ==================== */
 const QUESTIONS = [
   { part: "Часть 1. УК РО — подследственность МВД и квалификация",
     text: "1. Какая статья УК РО относится к подследственности МВД (обозначение [Р])?",
-    options: ["A) Ст. 6.2 (убийство) — [Ф/Р]","B) Ст. 12.1 (терроризм) — [Ф/С]","C) Ст. 10.1 (кража свыше 3 000 ₽) — [Р]","D) Ст. 7.1 (похищение человека) — [Ф]"], correct: 2 },
+    options: ["Ст. 6.2 (убийство) — [Ф/Р]","Ст. 12.1 (терроризм) — [Ф/С]","Ст. 10.1 (кража свыше 3 000 ₽) — [Р]","Ст. 7.1 (похищение человека) — [Ф]"], correct: 2 },
   { part: null,
     text: "2. Гражданин совершил кражу имущества стоимостью 4 500 ₽. По какой статье квалифицирует сотрудник МВД?",
-    options: ["A) Ст. 10.1 (кража свыше 3 000 ₽)","B) Ст. 10.2 (кража свыше 5 000 ₽)","C) Ст. 10.3 (кража свыше 15 000 ₽)","D) Ст. 10.12 (кража с проникновением)"], correct: 0 },
+    options: ["Ст. 10.1 (кража свыше 3 000 ₽)","Ст. 10.2 (кража свыше 5 000 ₽)","Ст. 10.3 (кража свыше 15 000 ₽)","Ст. 10.12 (кража с проникновением)"], correct: 0 },
   { part: null,
     text: "3. Сотрудник МВД задержал лицо по ст. 6.1 УК РО (телесные повреждения, ★★). Какой максимальный срок он может назначить в упрощённом порядке?",
-    options: ["A) До 3 лет","B) До 5 лет","C) До 10 лет","D) До 20 месяцев"], correct: 1 },
+    options: ["До 3 лет","До 5 лет","До 10 лет","До 20 месяцев"], correct: 1 },
   { part: null,
     text: "4. Что означает обозначение [Р] в статье Особенной части УК РО (ст. 5.12)?",
-    options: ["A) Подследственность ФСБ","B) Подследственность Военной полиции","C) Подследственность Следственного комитета","D) Подследственность МВД"], correct: 3 },
+    options: ["Подследственность ФСБ","Подследственность Военной полиции","Подследственность Следственного комитета","Подследственность МВД"], correct: 3 },
   { part: null,
     text: "5. Сотрудник МВД задержал лицо по ст. 10.5 УК РО (грабёж). Может ли он применить упрощённый порядок?",
-    options: ["A) Нет, только суд","B) Да, если нет спора о фактах и доказательств достаточно","C) Да, но только с санкции прокурора","D) Нет, грабёж — исключительная подследственность СК"], correct: 1 },
+    options: ["Нет, только суд","Да, если нет спора о фактах и доказательств достаточно","Да, но только с санкции прокурора","Нет, грабёж — исключительная подследственность СК"], correct: 1 },
   { part: null,
     text: "6. Гражданин хранил 2,5 г каннабиноидов. Как квалифицирует сотрудник МВД?",
-    options: ["A) Уголовная ответственность по ст. 12.8 УК","B) Уголовная ответственность по ст. 4.6 УК","C) Административная ответственность по ст. 7.10 КоАП с изъятием","D) Ответственность не наступает"], correct: 2 },
+    options: ["Уголовная ответственность по ст. 12.8 УК","Уголовная ответственность по ст. 4.6 УК","Административная ответственность по ст. 7.10 КоАП с изъятием","Ответственность не наступает"], correct: 2 },
   { part: null,
     text: "7. Какое максимальное наказание предусмотрено за разбойное ограбление (ст. 10.6 УК РО, [Ф/Р])?",
-    options: ["A) До 30 месяцев","B) До 40 месяцев","C) До 50 месяцев","D) До 60 месяцев"], correct: 1 },
+    options: ["До 30 месяцев","До 40 месяцев","До 50 месяцев","До 60 месяцев"], correct: 1 },
   { part: "Часть 2. УК РО — задержание и упрощённый порядок",
     text: "8. Сотрудник МВД задержал государственного служащего по ст. 10.5 УК РО. Может ли он назначить уголовный штраф в упрощённом порядке?",
-    options: ["A) Да, если ущерб небольшой","B) Да, но не более 30 000 ₽","C) Да, с согласия задержанного","D) Нет, только прокурор"], correct: 3 },
+    options: ["Да, если ущерб небольшой","Да, но не более 30 000 ₽","Да, с согласия задержанного","Нет, только прокурор"], correct: 3 },
   { part: null,
     text: "9. Какое наказание НЕ может назначить сотрудник МВД в упрощённом порядке (ст. 5.11 ч. 4 УК РО)?",
-    options: ["A) Лишение свободы","B) Уголовный штраф","C) Лишение права занимать определённые должности","D) Конфискация"], correct: 2 },
+    options: ["Лишение свободы","Уголовный штраф","Лишение права занимать определённые должности","Конфискация"], correct: 2 },
   { part: null,
     text: "10. В каком случае сотрудник МВД НЕ вправе применить упрощённое разрешение материала (ст. 5.11 ч. 6)?",
-    options: ["A) Если задержанный несовершеннолетний","B) Если преступление совершено впервые","C) Если ущерб менее 3 000 ₽","D) При существенном споре о фактах или необходимости экспертизы"], correct: 3 },
+    options: ["Если задержанный несовершеннолетний","Если преступление совершено впервые","Если ущерб менее 3 000 ₽","При существенном споре о фактах или необходимости экспертизы"], correct: 3 },
   { part: null,
     text: "11. Сотрудник МВД задержал лицо по ст. 10.1 УК РО (кража, ★). Что он обязан сделать до помещения под арест (ст. 5.11 ч. 5)?",
-    options: ["A) Только составить протокол","B) Объявить обстоятельства, статью, срок и разъяснить право на обжалование","C) Уведомить прокурора","D) Получить санкцию суда"], correct: 1 },
+    options: ["Только составить протокол","Объявить обстоятельства, статью, срок и разъяснить право на обжалование","Уведомить прокурора","Получить санкцию суда"], correct: 1 },
   { part: null,
     text: "12. Гражданин совершил преступление по ст. 6.2 УК РО (убийство, ★★★★). Какое последствие наступает при аресте?",
-    options: ["A) Только лишение свободы","B) Только уголовный штраф","C) Лишение свободы с записью о судимости","D) Предупреждение"], correct: 2 },
+    options: ["Только лишение свободы","Только уголовный штраф","Лишение свободы с записью о судимости","Предупреждение"], correct: 2 },
   { part: null,
     text: "13. Сотрудник МВД установил уровень розыска ★★★ за нарушение УК РО. В каком диапазоне он вправе устанавливать приоритет розыска (ст. 5.7 ч. 3)?",
-    options: ["A) От ★ до ★★★","B) От ★ до ★★★★★","C) Только ★★","D) Только по решению суда"], correct: 1 },
+    options: ["От ★ до ★★★","От ★ до ★★★★★","Только ★★","Только по решению суда"], correct: 1 },
   { part: "Часть 3. КоАП РО — работа сотрудника МВД",
     text: "14. Какое максимальное наказание может назначить сотрудник МВД в упрощённом порядке по ст. 7.1 КоАП (мелкое хулиганство, повторно)?",
-    options: ["A) Штраф до 30 000 ₽ или арест до 10 суток","B) Штраф до 15 000 ₽","C) Арест до 15 суток","D) Только предупреждение"], correct: 0 },
+    options: ["Штраф до 30 000 ₽ или арест до 10 суток","Штраф до 15 000 ₽","Арест до 15 суток","Только предупреждение"], correct: 0 },
   { part: null,
     text: "15. Сотрудник МВД выявил нарушение по ст. 7.4 КоАП (пьяный в общественном месте). Какое наказание он вправе назначить?",
-    options: ["A) Штраф 5 000–15 000 ₽ или арест до 5 суток","B) Только штраф 15 000 ₽","C) Арест до 15 суток","D) Лишение специального права"], correct: 0 },
+    options: ["Штраф 5 000–15 000 ₽ или арест до 5 суток","Только штраф 15 000 ₽","Арест до 15 суток","Лишение специального права"], correct: 0 },
   { part: null,
     text: "16. Гражданин уклонился от оплаты административного штрафа (игнорировал тикет 15 секунд). Какое наказание предусмотрено (ст. 5.6, 6.1 КоАП)?",
-    options: ["A) Штраф в двойном размере","B) Предупреждение","C) Лишение специального права","D) Административный арест на 10 суток"], correct: 3 },
+    options: ["Штраф в двойном размере","Предупреждение","Лишение специального права","Административный арест на 10 суток"], correct: 3 },
   { part: null,
     text: "17. Сотрудник МВД рассматривает жалобу на своё же решение. В течение какого срока он обязан предоставить материалы вышестоящему (ст. 5.5 ч. 4 КоАП)?",
-    options: ["A) 12 часов","B) 48 часов","C) 24 часа","D) 72 часа"], correct: 2 },
+    options: ["12 часов","48 часов","24 часа","72 часа"], correct: 2 },
   { part: null,
     text: "18. Что происходит, если сотрудник МВД не предоставил материалы по жалобе в срок (ст. 5.5 ч. 4 КоАП)?",
-    options: ["A) Жалоба отклоняется","B) Назначается повторное рассмотрение","C) Штраф возвращается частично","D) Решение отменяется, производство прекращается"], correct: 3 },
+    options: ["Жалоба отклоняется","Назначается повторное рассмотрение","Штраф возвращается частично","Решение отменяется, производство прекращается"], correct: 3 },
   { part: null,
     text: "19. Сотрудник МВД выявил нарушение по ст. 6.1 КоАП (уклонение от наказания). Может ли он сам назначить арест?",
-    options: ["A) Да, до 10 суток","B) Нет, только суд","C) Да, с санкции прокурора","D) Да, если нарушение повторное"], correct: 1 },
+    options: ["Да, до 10 суток","Нет, только суд","Да, с санкции прокурора","Да, если нарушение повторное"], correct: 1 },
   { part: null,
     text: "20. Гражданин совершил два административных правонарушения одновременно. Как сотрудник МВД назначает наказание (ст. 4.4 КоАП)?",
-    options: ["A) Только за более тяжкое","B) За каждое, но итог не может обходить максимальные пределы Кодекса","C) Только предупреждение","D) Наказание не назначается"], correct: 1 },
+    options: ["Только за более тяжкое","За каждое, но итог не может обходить максимальные пределы Кодекса","Только предупреждение","Наказание не назначается"], correct: 1 },
   { part: "Часть 4. Процессуальный кодекс РО",
     text: "21. На какой максимальный срок допускается задержание лица по Процессуальному кодексу РО (гл. II)?",
-    options: ["A) До 1 часа","B) До 3 часов","C) До 24 часов","D) До 48 часов"], correct: 0 },
+    options: ["До 1 часа","До 3 часов","До 24 часов","До 48 часов"], correct: 0 },
   { part: null,
     text: "22. Сотрудник МВД задержал гражданина, который требует государственного адвоката. Через сколько минут, если нет ответа о возможности предоставить адвоката, процессуальные действия могут быть продолжены (гл. II ст. 3.1)?",
-    options: ["A) 1 минута","B) 3 минуты","C) 5 минут","D) 10 минут"], correct: 1 },
+    options: ["1 минута","3 минуты","5 минут","10 минут"], correct: 1 },
   { part: null,
     text: "23. Задержанный заявил о желании воспользоваться частным адвокатом. На сколько максимально приостанавливается процессуальный час в ожидании его прибытия (гл. II ст. 3.3)?",
-    options: ["A) 5 минут","B) 10 минут","C) 15 минут","D) 30 минут"], correct: 1 },
+    options: ["5 минут","10 минут","15 минут","30 минут"], correct: 1 },
   { part: null,
     text: "24. Сотрудник МВД задержал государственного служащего. Кто обязан прибыть в обязательном порядке (гл. II ст. 4)?",
-    options: ["A) Только адвокат","B) Только представитель начальства задержанного","C) Прокурор и следователь Следственного комитета РО","D) Только сотрудник ФСБ"], correct: 2 },
+    options: ["Только адвокат","Только представитель начальства задержанного","Прокурор и следователь Следственного комитета РО","Только сотрудник ФСБ"], correct: 2 },
   { part: null,
     text: "25. Прокурор и следователь СК обязаны принять вызов при задержании госслужащего в течение какого срока (гл. II ст. 4.2)?",
-    options: ["A) 3 минут","B) 5 минут","C) 10 минут","D) 15 минут"], correct: 1 },
+    options: ["3 минут","5 минут","10 минут","15 минут"], correct: 1 },
   { part: null,
     text: "26. Что происходит, если при задержании государственного служащего ни прокурор, ни следователь СК не прибыли в установленный срок (гл. II ст. 4.2.2)?",
-    options: ["A) Задержанный остаётся под стражей до прибытия","B) Задержанный освобождается, материалы направляются в прокуратуру и СК","C) Сотрудник МВД сам принимает решение по материалу","D) Задержанный передаётся ФСБ"], correct: 1 },
+    options: ["Задержанный остаётся под стражей до прибытия","Задержанный освобождается, материалы направляются в прокуратуру и СК","Сотрудник МВД сам принимает решение по материалу","Задержанный передаётся ФСБ"], correct: 1 },
   { part: null,
     text: "27. В течение какого срока сотрудник, проводивший задержание, обязан хранить видеозапись оснований и самого задержания (гл. II ст. 10)?",
-    options: ["A) 12 часов","B) 24 часа","C) 48 часов","D) 7 суток"], correct: 2 },
+    options: ["12 часов","24 часа","48 часов","7 суток"], correct: 2 },
   { part: null,
     text: "28. Какой срок предварительного расследования установлен по общему правилу (гл. I ст. 13)?",
-    options: ["A) До 24 часов","B) До 48 часов","C) До 96 часов","D) До 7 календарных дней"], correct: 2 },
+    options: ["До 24 часов","До 48 часов","До 96 часов","До 7 календарных дней"], correct: 2 },
   { part: null,
     text: "29. Сотрудник МВД проводит обыск транспортного средства. Что из перечисленного НЕ является достаточным основанием для полного обыска без дополнительных обстоятельств (гл. V ст. 3)?",
-    options: ["A) Попытка водителя скрыться от законного требования об остановке","B) Наличие действующей ориентировки на транспортное средство","C) Обнаружение оружия у водителя","D) Отсутствие регистрационного знака само по себе"], correct: 3 },
+    options: ["Попытка водителя скрыться от законного требования об остановке","Наличие действующей ориентировки на транспортное средство","Обнаружение оружия у водителя","Отсутствие регистрационного знака само по себе"], correct: 3 },
   { part: null,
     text: "30. Сотрудник МВД начал неотложный обыск жилища без предварительного судебного разрешения. В течение какого срока он обязан уведомить прокурора (гл. V ст. 2)?",
-    options: ["A) Не позднее 1 часа с момента начала действия","B) Не позднее 3 часов","C) Не позднее 24 часов","D) Не позднее 48 часов"], correct: 0 }
+    options: ["Не позднее 1 часа с момента начала действия","Не позднее 3 часов","Не позднее 24 часов","Не позднее 48 часов"], correct: 0 }
 ];
 
-let userData = { surname: '', name: '', static: '', udo: null, plan: null };
-let answers = new Array(QUESTIONS.length).fill(null);
+const LETTERS = ['A', 'B', 'C', 'D'];
 
+let userData = { name: '', surname: '', static: '', udo: null, plan: null };
+let answers = new Array(QUESTIONS.length).fill(null);
+let currentStep = 0;
+let stepLocked = false; // блокировка кнопки «Далее» во время анимации
+
+/* ==================== ТЕМА ==================== */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+  try { localStorage.setItem('test-theme', theme); } catch(e) {}
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+}
+(function initTheme() {
+  let saved = 'dark';
+  try { saved = localStorage.getItem('test-theme') || 'dark'; } catch(e) {}
+  applyTheme(saved);
+})();
+
+/* ==================== СТАРТ ТЕСТА ==================== */
 function startTest() {
-  const surname = document.getElementById('surname').value.trim();
   const name = document.getElementById('name').value.trim();
+  const surname = document.getElementById('surname').value.trim();
   const staticVal = document.getElementById('static').value.trim();
   const udoFile = document.getElementById('fileUdo').files[0];
   const planFile = document.getElementById('filePlan').files[0];
 
-  if (!surname || !name || !staticVal || !udoFile || !planFile) {
+  if (!name || !surname || !staticVal || !udoFile || !planFile) {
     document.getElementById('authWarning').style.display = 'block';
     return;
   }
-
-  userData = { surname, name, static: staticVal, udo: udoFile, plan: planFile };
+  userData = { name, surname, static: staticVal, udo: udoFile, plan: planFile };
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-test').classList.remove('hidden');
-  document.getElementById('userLabel').textContent =
-    `${userData.surname} ${userData.name} | Статик: ${userData.static}`;
-  renderQuestions();
+  document.getElementById('userLabel').textContent = `${userData.name} ${userData.surname} · ${userData.static}`;
+  document.getElementById('stepTotal').textContent = QUESTIONS.length;
+  currentStep = 0;
+  renderStep();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function renderQuestions() {
-  const form = document.getElementById('testForm');
-  form.innerHTML = '';
-  QUESTIONS.forEach((q, idx) => {
-    if (q.part) {
-      const partEl = document.createElement('div');
-      partEl.className = 'part-title';
-      partEl.textContent = q.part;
-      form.appendChild(partEl);
-    }
-    const div = document.createElement('div');
-    div.className = 'question';
-    div.id = 'q' + idx;
-    const title = document.createElement('div');
-    title.className = 'q-title';
-    title.innerHTML = `<span class="num">${idx + 1}</span>${q.text.replace(/^\d+\.\s*/, '')}`;
-    div.appendChild(title);
-    q.options.forEach((opt, oIdx) => {
-      const label = document.createElement('label');
-      label.className = 'option';
-      label.innerHTML = `<input type="radio" name="q${idx}" value="${oIdx}" onchange="onAnswer(${idx}, ${oIdx})"><span>${opt}</span>`;
-      div.appendChild(label);
-    });
-    form.appendChild(div);
-  });
-  updateAnsweredCount();
+/* ==================== РЕНДЕР ОДНОГО ВОПРОСА ==================== */
+function renderStep() {
+  const wrap = document.getElementById('questionWrap');
+  const q = QUESTIONS[currentStep];
+  const selected = answers[currentStep];
+
+  wrap.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'question enter';
+  div.id = 'questionCard';
+
+  // Заголовок части (если есть)
+  let partHtml = '';
+  if (q.part) partHtml = `<div class="q-part">${q.part}</div>`;
+
+  // Варианты с каскадной анимацией
+  const optionsHtml = q.options.map((opt, i) => {
+    const isSel = selected === i;
+    return `
+      <label class="option ${isSel ? 'selected' : ''}" style="animation-delay:${0.08 + i * 0.07}s">
+        <input type="radio" name="q" value="${i}" ${isSel ? 'checked' : ''} onchange="pickOption(${i})">
+        <span class="letter">${LETTERS[i]}</span>
+        <span>${opt}</span>
+      </label>
+    `;
+  }).join('');
+
+  const isLast = currentStep === QUESTIONS.length - 1;
+  div.innerHTML = `
+    ${partHtml}
+    <div class="q-title">
+      <span class="num">${currentStep + 1}</span>
+      <span>${q.text.replace(/^\d+\.\s*/, '')}</span>
+    </div>
+    <div class="options" id="optionsBox">${optionsHtml}</div>
+    <div class="nav-row">
+      <button class="btn btn-back" onclick="prevStep()" ${currentStep === 0 ? 'disabled' : ''}>← Назад</button>
+      <button class="btn" id="nextBtn" onclick="nextStep()" disabled>${isLast ? 'Завершить тест' : 'Далее →'}</button>
+    </div>
+  `;
+  wrap.appendChild(div);
+
+  // Заполняем прогресс
+  document.getElementById('stepNum').textContent = currentStep + 1;
+  const fill = ((currentStep + (selected !== null ? 1 : 0)) / QUESTIONS.length) * 100;
+  document.getElementById('stepFill').style.width = fill + '%';
+
+  // Разблокируем «Далее» если уже был выбран ответ ранее
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.disabled = selected === null;
 }
 
-function onAnswer(qIdx, oIdx) {
-  answers[qIdx] = oIdx;
-  document.getElementById('q' + qIdx).querySelectorAll('.option')
-    .forEach((lbl, i) => lbl.classList.toggle('selected', i === oIdx));
-  updateAnsweredCount();
+/* ==================== ВЫБОР ВАРИАНТА ==================== */
+function pickOption(oIdx) {
+  answers[currentStep] = oIdx;
+  // Подсветка выбранного
+  const opts = document.querySelectorAll('#optionsBox .option');
+  opts.forEach((el, i) => el.classList.toggle('selected', i === oIdx));
+  // Разрешаем «Далее»
+  document.getElementById('nextBtn').disabled = false;
+  // Обновляем прогресс
+  const fill = ((currentStep + 1) / QUESTIONS.length) * 100;
+  document.getElementById('stepFill').style.width = fill + '%';
 }
 
-function updateAnsweredCount() {
-  const count = answers.filter(a => a !== null).length;
-  document.getElementById('answeredCount').textContent = `Отвечено: ${count} / ${QUESTIONS.length}`;
+/* ==================== НАВИГАЦИЯ ==================== */
+function nextStep() {
+  if (stepLocked) return;
+  if (answers[currentStep] === null) return;
+
+  if (currentStep === QUESTIONS.length - 1) {
+    // Последний вопрос — завершаем
+    finishTest();
+    return;
+  }
+
+  stepLocked = true;
+  const card = document.getElementById('questionCard');
+  card.classList.add('leave');
+  setTimeout(() => {
+    currentStep++;
+    renderStep();
+    stepLocked = false;
+  }, 220);
 }
 
+function prevStep() {
+  if (stepLocked) return;
+  if (currentStep === 0) return;
+  stepLocked = true;
+  const card = document.getElementById('questionCard');
+  card.classList.add('leave');
+  setTimeout(() => {
+    currentStep--;
+    renderStep();
+    stepLocked = false;
+  }, 220);
+}
+
+/* ==================== ЗАВЕРШЕНИЕ ==================== */
 function finishTest() {
   const unanswered = answers.filter(a => a === null).length;
   if (unanswered > 0) {
     if (!confirm(`Вы не ответили на ${unanswered} вопрос(ов). Завершить тест всё равно?`)) return;
   }
-
-  const finishBtn = document.getElementById('finishBtn');
-  finishBtn.disabled = true;
-  finishBtn.textContent = 'Обработка...';
 
   let score = 0;
   const reviewItems = [];
@@ -452,8 +737,8 @@ function finishTest() {
     if (isCorrect) score++;
     reviewItems.push({
       num: idx + 1, text: q.text,
-      userAnswerText: userAns !== null ? q.options[userAns] : '— (нет ответа)',
-      correctAnswerText: q.options[q.correct],
+      userAnswerText: userAns !== null ? `${LETTERS[userAns]}) ${q.options[userAns]}` : '— (нет ответа)',
+      correctAnswerText: `${LETTERS[q.correct]}) ${q.options[q.correct]}`,
       isCorrect
     });
   });
@@ -462,29 +747,29 @@ function finishTest() {
   document.getElementById('progressBar').style.width = '0%';
   document.getElementById('screen-result').classList.remove('hidden');
 
-  document.getElementById('resultUser').textContent =
-    `${userData.surname} ${userData.name} | Статик: ${userData.static}`;
+  document.getElementById('resultUser').textContent = `${userData.name} ${userData.surname} | Статик: ${userData.static}`;
   document.getElementById('scoreDisplay').textContent = `${score} / ${QUESTIONS.length}`;
 
   const percent = Math.round((score / QUESTIONS.length) * 100);
   const gradeDisplay = document.getElementById('gradeDisplay');
-  let gradeText = '', gradeColor = '#38bdf8';
-  if (percent >= 90) { gradeText = 'Отлично'; gradeColor = '#22c55e'; }
-  else if (percent >= 75) { gradeText = 'Хорошо'; gradeColor = '#38bdf8'; }
-  else if (percent >= 60) { gradeText = 'Удовлетворительно'; gradeColor = '#facc15'; }
-  else { gradeText = 'Неудовлетворительно'; gradeColor = '#ef4444'; }
+  let gradeText = '', gradeColor = 'var(--accent)';
+  if (percent >= 90) { gradeText = 'Отлично'; gradeColor = 'var(--green)'; }
+  else if (percent >= 75) { gradeText = 'Хорошо'; gradeColor = 'var(--accent)'; }
+  else if (percent >= 60) { gradeText = 'Удовлетворительно'; gradeColor = 'var(--gold)'; }
+  else { gradeText = 'Неудовлетворительно'; gradeColor = 'var(--red)'; }
   gradeDisplay.textContent = `${gradeText} (${percent}%)`;
   gradeDisplay.style.color = gradeColor;
 
   const reviewList = document.getElementById('reviewList');
-  reviewList.innerHTML = '<h3 style="text-align:left;color:#facc15;margin-bottom:14px;font-size:16px;">Разбор ответов</h3>';
-  reviewItems.forEach(item => {
+  reviewList.innerHTML = '<h3 style="text-align:left;color:var(--gold);margin-bottom:14px;font-size:16px;">Разбор ответов</h3>';
+  reviewItems.forEach((item, i) => {
     const div = document.createElement('div');
     div.className = 'review-item ' + (item.isCorrect ? 'correct' : 'wrong');
+    div.style.animationDelay = (i * 0.02) + 's';
     const icon = item.isCorrect ? '✅' : '❌';
     div.innerHTML = `
       <div style="font-weight:600;margin-bottom:4px;">${icon} Вопрос ${item.num}</div>
-      <div style="color:#cbd5e1;margin-bottom:6px;">${item.text}</div>
+      <div style="color:var(--text);margin-bottom:6px;">${item.text}</div>
       <div class="ans">Ваш ответ: <b class="${item.isCorrect ? 'correct-txt' : 'wrong-txt'}">${item.userAnswerText}</b></div>
       ${!item.isCorrect ? `<div class="ans">Правильный ответ: <b class="correct-txt">${item.correctAnswerText}</b></div>` : ''}
     `;
@@ -492,11 +777,49 @@ function finishTest() {
   });
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  sendToDiscord(score, percent, reviewItems);
+  sendToDiscord(score, percent, gradeText, reviewItems);
 }
 
-/* ==================== КРАСИВЫЙ EMBED + КНОПКИ ==================== */
-async function sendToDiscord(score, percent, reviewItems) {
+/* ==================== TXT-ОТЧЁТ ==================== */
+function buildTxtReport(score, percent, gradeText, reviewItems) {
+  const wrongCount = QUESTIONS.length - score;
+  const line = '='.repeat(60);
+  const lines = [];
+  lines.push(line);
+  lines.push('           ОТЧЁТ О ПРОХОЖДЕНИИ ТЕСТА');
+  lines.push('     УК РО / КоАП РО / Процессуальный кодекс РО');
+  lines.push(line);
+  lines.push('');
+  lines.push(`Дата и время:        ${new Date().toLocaleString('ru-RU')}`);
+  lines.push(`Сотрудник:           ${userData.name} ${userData.surname}`);
+  lines.push(`Статик:              ${userData.static}`);
+  lines.push('');
+  lines.push(`Всего вопросов:      ${QUESTIONS.length}`);
+  lines.push(`Правильных ответов:  ${score}`);
+  lines.push(`Неправильных:        ${wrongCount}`);
+  lines.push(`Процент:             ${percent}%`);
+  lines.push(`Оценка:              ${gradeText}`);
+  lines.push('');
+  lines.push(line);
+  lines.push('                  РАЗБОР ОТВЕТОВ');
+  lines.push(line);
+  lines.push('');
+  reviewItems.forEach(item => {
+    lines.push(`--- Вопрос ${item.num} ---`);
+    lines.push(item.text);
+    lines.push(`  Ваш ответ:        ${item.userAnswerText}`);
+    if (!item.isCorrect) lines.push(`  Правильный ответ: ${item.correctAnswerText}`);
+    lines.push(`  Результат:        ${item.isCorrect ? 'ВЕРНО' : 'ОШИБКА'}`);
+    lines.push('');
+  });
+  lines.push(line);
+  lines.push('Конец отчёта.');
+  lines.push(line);
+  return lines.join('\n');
+}
+
+/* ==================== ОТПРАВКА В DISCORD ==================== */
+async function sendToDiscord(score, percent, gradeText, reviewItems) {
   const statusEl = document.getElementById('discordStatus');
 
   if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('ВСТАВЬТЕ')) {
@@ -506,7 +829,7 @@ async function sendToDiscord(score, percent, reviewItems) {
   }
 
   statusEl.className = 'status-msg loading';
-  statusEl.textContent = '⏳ Отправка результатов в Discord...';
+  statusEl.textContent = '⏳ Отправка отчёта в Discord...';
 
   const wrongCount = QUESTIONS.length - score;
   const embedColor = percent >= 90 ? 0x22c55e
@@ -514,7 +837,16 @@ async function sendToDiscord(score, percent, reviewItems) {
                    : percent >= 60 ? 0xfacc15
                    : 0xef4444;
 
-  // Краткий список неверных (для embed, максимум ~1000 символов на поле)
+  let content = '';
+  if (NOTIFY_USER_ID.trim()) {
+    content = NOTIFY_USER_ID.split(',')
+      .map(id => id.trim())
+      .filter(id => /^\d{17,20}$/.test(id))
+      .map(id => `<@${id}>`)
+      .join(' ');
+    if (content) content += ' — новый отчёт на проверку';
+  }
+
   const wrongItems = reviewItems.filter(i => !i.isCorrect);
   let wrongText;
   if (wrongItems.length === 0) {
@@ -527,45 +859,35 @@ async function sendToDiscord(score, percent, reviewItems) {
       return `**${i.num}.** ${qShort}\n❌ ${user}\n✅ ${corr}`;
     });
     wrongText = '';
-    for (const line of lines) {
-      if ((wrongText + '\n\n' + line).length > 1000) { wrongText += '\n…(обрезано)'; break; }
-      wrongText += (wrongText ? '\n\n' : '') + line;
+    for (const l of lines) {
+      if ((wrongText + '\n\n' + l).length > 1000) { wrongText += '\n…(обрезано)'; break; }
+      wrongText += (wrongText ? '\n\n' : '') + l;
     }
     if (!wrongText) wrongText = '—';
   }
-
   const safe = (v) => (!v || !String(v).trim()) ? '—' : String(v).slice(0, 1024);
 
   const payload = {
     username: 'Тест УК РО',
+    content: content || undefined,
     embeds: [{
       title: '📝 Отчёт о прохождении теста',
-      description: `**${userData.surname} ${userData.name}** · Статик: \`${userData.static}\``,
+      description: `**${userData.name} ${userData.surname}** · Статик: \`${userData.static}\``,
       color: embedColor,
       fields: [
         { name: '✅ Правильных', value: `**${score}**`, inline: true },
         { name: '❌ Неправильных', value: `**${wrongCount}**`, inline: true },
         { name: '📊 Процент', value: `**${percent}%**`, inline: true },
-        { name: '🏆 Оценка', value: percent >= 90 ? 'Отлично' : percent >= 75 ? 'Хорошо' : percent >= 60 ? 'Удовлетворительно' : 'Неудовлетворительно', inline: false },
+        { name: '🏆 Оценка', value: gradeText, inline: false },
         { name: '📋 Неверные ответы', value: safe(wrongText), inline: false }
       ],
       footer: { text: 'Устный тест · УК РО / КоАП РО / Процессуальный кодекс' },
       timestamp: new Date().toISOString()
-    }],
-    components: [
-      {
-        type: 1,
-        components: [
-          { type: 2, style: 3, label: '✅ Принять', custom_id: 'approve_report' },
-          { type: 2, style: 4, label: '❌ Отклонить', custom_id: 'reject_report' }
-        ]
-      }
-    ]
+    }]
   };
 
-  const totalLen = JSON.stringify(payload.embeds[0]).length;
-  if (totalLen > 5800) {
-    payload.embeds[0].fields[4].value = `Неверных: ${wrongCount}. Разбор не отправлен (слишком длинный).`;
+  if (JSON.stringify(payload.embeds[0]).length > 5800) {
+    payload.embeds[0].fields[4].value = `Неверных: ${wrongCount}. Разбор смотрите в прикреплённом TXT-файле.`;
   }
 
   const formData = new FormData();
@@ -573,19 +895,20 @@ async function sendToDiscord(score, percent, reviewItems) {
   if (userData.udo) formData.append('files[0]', userData.udo, 'udo_' + userData.static + '.png');
   if (userData.plan) formData.append('files[1]', userData.plan, 'plan_' + userData.static + '.png');
 
+  const txt = buildTxtReport(score, percent, gradeText, reviewItems);
+  const txtBlob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  formData.append('files[2]', txtBlob, 'report_' + userData.static + '.txt');
+
   try {
     const res = await fetch(DISCORD_WEBHOOK_URL + '?wait=true', { method: 'POST', body: formData });
     if (res.ok) {
-      const data = await res.json();
-      // Сохраняем id сообщения и токен webhook — они нужны обработчику для редактирования
-      console.log('Отправлено. Message ID:', data.id);
       statusEl.className = 'status-msg ok';
-      statusEl.textContent = '✅ Отчёт отправлен руководству на проверку.';
+      statusEl.textContent = '✅ Отчёт с TXT-файлом отправлен руководству.';
     } else {
-      const txt = await res.text();
-      console.error('Discord error:', res.status, txt);
+      const t = await res.text();
+      console.error('Discord error:', res.status, t);
       statusEl.className = 'status-msg err';
-      statusEl.textContent = `⚠️ Ошибка отправки (${res.status}): ${txt.slice(0, 200)}`;
+      statusEl.textContent = `⚠️ Ошибка отправки (${res.status}): ${t.slice(0, 200)}`;
     }
   } catch (err) {
     console.error('Fetch error:', err);
@@ -594,6 +917,7 @@ async function sendToDiscord(score, percent, reviewItems) {
   }
 }
 
+/* ==================== ПРОГРЕСС-БАР ПРОКРУТКИ ==================== */
 window.addEventListener('scroll', () => {
   const scrollTop = window.scrollY;
   const docHeight = document.documentElement.scrollHeight - window.innerHeight;
