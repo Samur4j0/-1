@@ -279,6 +279,29 @@
       margin-bottom: 14px;
     }
     .step-header .row strong { color: var(--accent); font-weight: 700; font-size: 16px; }
+    
+    /* Таймер */
+    .timer {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 18px;
+      background: var(--bg-input);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .timer.danger {
+      color: var(--red);
+      border-color: var(--red);
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+      animation: pulseDanger 1s infinite alternate;
+    }
+    @keyframes pulseDanger {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0.6; transform: scale(1.05); }
+    }
+
     .step-bar { height: 8px; background: var(--bg-input); border-radius: 999px; overflow: hidden; position: relative; }
     .step-bar-fill {
       height: 100%;
@@ -350,12 +373,7 @@
       box-shadow: 0 5px 15px var(--accent-glow);
     }
 
-    /* Эффект печатной машинки */
-    .typing-text {
-      overflow: hidden;
-      white-space: pre-wrap;
-      animation: typing 1s steps(40, end);
-    }
+    .typing-text { overflow: hidden; white-space: pre-wrap; animation: typing 1s steps(40, end); }
     @keyframes typing { from { max-height: 0; opacity: 0; } to { max-height: 200px; opacity: 1; } }
 
     .options { display: flex; flex-direction: column; gap: 14px; }
@@ -379,7 +397,6 @@
     }
     @keyframes optionIn { to { opacity: 1; transform: translateY(0); } }
     
-    /* Эффект волны при клике */
     .option .ripple {
       position: absolute;
       border-radius: 50%;
@@ -486,7 +503,6 @@
 
     .warning { color: var(--red); font-size: 14px; margin-top: -10px; margin-bottom: 15px; display: none; font-weight: 700; }
 
-    /* Прогресс-бар скролла */
     .progress-bar {
       position: fixed;
       top: 0; left: 0;
@@ -498,7 +514,6 @@
       transition: width 0.1s;
     }
 
-    /* Лоадер */
     .spinner {
       display: inline-block;
       width: 18px; height: 18px;
@@ -511,7 +526,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Всплывающие уведомления (Toast) */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -542,6 +556,7 @@
       .q-title { font-size: 17px; }
       .stats-grid { grid-template-columns: 1fr; gap: 15px; }
       .btn { padding: 16px 25px; }
+      .step-header .row { flex-direction: column; align-items: flex-start; gap: 10px; }
     }
   </style>
 </head>
@@ -587,6 +602,7 @@
       <div class="row">
         <span>Сотрудник: <strong id="userLabel"></strong></span>
         <span>Вопрос <strong id="stepNum">1</strong> из <strong id="stepTotal">30</strong></span>
+        <span class="timer" id="timerDisplay">25:00</span>
       </div>
       <div class="step-bar"><div class="step-bar-fill" id="stepFill"></div></div>
     </div>
@@ -619,10 +635,10 @@
    ⚙️ НАСТРОЙКА
    ===================================================================== */
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1568753176629350452/emztUgE0fPyxiB8H4uQ3UDrg835QjvbQSLq5aUKribYgKxH7aarGKlV4ax5DbhHvTWlG";
-
-/* Кого уведомлять (пинг) — Discord ID пользователя.
-   Можно несколько через запятую: "123456789012345678, 987654321098765432" */
 const NOTIFY_USER_ID = "535387398587154442,657932083410239488,381555682769502219,1354521931914805429,1131673064980086938"; 
+
+// Время на тест (в минутах)
+const TEST_TIME_MINUTES = 25;
 /* ===================================================================== */
 
 const QUESTIONS = [
@@ -664,7 +680,10 @@ let answers = new Array(QUESTIONS.length).fill(null);
 let currentStep = 0;
 let stepLocked = false;
 
-/* 3D Наклон карточек */
+/* Таймер */
+let timeLeft = TEST_TIME_MINUTES * 60; 
+let timerInterval = null;
+
 function tilt(e, el) {
   const rect = el.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -679,7 +698,6 @@ function resetTilt(el) {
   el.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
 }
 
-/* Всплывающие уведомления */
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
@@ -702,6 +720,30 @@ function toggleTheme() {
   applyTheme(saved);
 })();
 
+/* Логика таймера */
+function startTimer() {
+  const timerDisplay = document.getElementById('timerDisplay');
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timerDisplay.textContent = '00:00';
+      showToast('⏰ Время вышло! Тест завершён.');
+      finishTest(true); // Принудительное завершение
+      return;
+    }
+    
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `${m}:${s}`;
+    
+    // Красная пульсация за 5 минут до конца
+    if (timeLeft <= 300) {
+      timerDisplay.classList.add('danger');
+    }
+  }, 1000);
+}
+
 function startTest() {
   const name = document.getElementById('name').value.trim();
   const surname = document.getElementById('surname').value.trim();
@@ -721,6 +763,7 @@ function startTest() {
   document.getElementById('stepTotal').textContent = QUESTIONS.length;
   currentStep = 0;
   renderStep();
+  startTimer(); // Запускаем таймер
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -771,7 +814,6 @@ function renderStep() {
   document.getElementById('nextBtn').disabled = selected === null;
 }
 
-/* Эффект волны */
 function createRipple(event, element) {
   const ripple = document.createElement("span");
   ripple.classList.add("ripple");
@@ -818,8 +860,14 @@ function prevStep() {
   }, 300);
 }
 
-function finishTest() {
-  if (answers.includes(null) && !confirm(`Вы не ответили на все вопросы. Завершить?`)) return;
+/* forceFinish = true, если сработал таймер */
+function finishTest(forceFinish = false) {
+  if (!forceFinish && answers.includes(null)) {
+    if (!confirm(`Вы не ответили на все вопросы. Завершить?`)) return;
+  }
+
+  // Останавливаем таймер
+  if (timerInterval) clearInterval(timerInterval);
 
   let score = 0;
   const reviewItems = [];
