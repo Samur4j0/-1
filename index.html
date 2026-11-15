@@ -263,9 +263,31 @@
       font-size: 14px;
       color: var(--text-muted);
       margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     .step-header .row strong { color: var(--accent); font-weight: 700; font-size: 15px; }
     
+    .error-counter {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--red);
+      background: rgba(239, 68, 68, 0.1);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .error-counter.danger {
+      background: rgba(239, 68, 68, 0.25);
+      animation: pulseError 1s infinite alternate;
+    }
+    @keyframes pulseError { from { transform: scale(1); } to { transform: scale(1.05); } }
+
     .timer-container { display: flex; align-items: center; gap: 10px; }
     .timer {
       color: var(--text);
@@ -400,6 +422,8 @@
     .option.selected {
       background: var(--selected-bg);
       border-color: var(--accent);
+      cursor: default;
+      pointer-events: none;
     }
     .option.selected .letter { 
       background: var(--accent); 
@@ -651,23 +675,12 @@
     </div>
     <div class="top-controls">
       <div class="status-dot" id="netStatus" title="Статус сети"></div>
-      <button class="icon-btn" id="shuffleBtn" title="Случайный порядок" onclick="toggleShuffle()">🔀</button>
       <button class="icon-btn" id="themeToggle" title="Сменить тему" onclick="toggleTheme()">🌙</button>
     </div>
   </div>
 
   <!-- ЭКРАН 1: Регистрация -->
   <div id="screen-auth">
-    <!-- Скелетон загрузки (скрыт по умолчанию) -->
-    <div id="skeletonLoader" class="hidden">
-      <div class="card" style="opacity:0.5">
-        <div style="height:20px; width:200px; background:var(--border); margin-bottom:20px; border-radius:4px;"></div>
-        <div style="height:40px; background:var(--border); margin-bottom:15px; border-radius:8px;"></div>
-        <div style="height:40px; background:var(--border); margin-bottom:15px; border-radius:8px;"></div>
-        <div style="height:40px; background:var(--border); margin-bottom:15px; border-radius:8px;"></div>
-      </div>
-    </div>
-    
     <div class="card" id="authForm">
       <h2>📋 Идентификация</h2>
       <label for="name">Имя *</label>
@@ -684,7 +697,6 @@
       
       <div style="display:flex; gap:10px; margin-top: 10px; flex-wrap: wrap;">
         <button class="btn" style="flex:1" onclick="startTest()">Начать тест</button>
-        <button class="btn" style="flex:1; background: var(--gold); display:none;" id="btnResume" onclick="resumeTest()">Продолжить (Сохранено)</button>
       </div>
     </div>
   </div>
@@ -694,7 +706,8 @@
     <div class="step-header">
       <div class="row">
         <span>Сотрудник: <strong id="userLabel"></strong></span>
-        <span>Вопрос <strong id="stepNum">1</strong> из <strong id="stepTotal">30</strong></span>
+        <span>Вопрос <strong id="stepNum">1</strong> из <strong id="stepTotal">25</strong></span>
+        <div class="error-counter" id="errorCounter">❌ Ошибки: 0 / 5</div>
       </div>
       <div class="step-bar"><div class="step-bar-fill" id="stepFill"></div></div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
@@ -712,10 +725,10 @@
   <div id="screen-result" class="hidden">
     <div class="result-card">
       <div class="avatar-circle" id="avatarCircle">?</div>
-      <h2>Тест завершён</h2>
+      <h2 id="resultTitle">Тест завершён</h2>
       <div style="color:var(--text-muted); font-family:var(--font-mono); font-size:14px;" id="resultUser"></div>
       
-      <div class="score" id="scoreDisplay">0 / 30</div>
+      <div class="score" id="scoreDisplay">0 / 25</div>
       <div class="grade" id="gradeDisplay"></div>
       
       <div class="stats-grid" id="statsGrid"></div>
@@ -752,12 +765,16 @@
    ⚙️ НАСТРОЙКА
    ===================================================================== */
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1569418780034080888/qcI36aXdBbEUFt9JsSrcoIii7RmtzKtbwJUYhO4vI3hFAPu7Oe8wKr-owey6KUOTULJ3";
-const NOTIFY_USER_ID = "535387398587154442,657932083410239488,1354521931914805429,623187321700745226,"; 
+const NOTIFY_USER_ID = "535387398587154442,657932083410239488,1354521931914805429,623187321700745226"; 
 const TEST_TIME_MINUTES = 25;
-const SAVE_KEY = "uku_test_save";
+const MAX_ERRORS = 5; // Максимальное количество ошибок
+const INITIAL_QUESTIONS_COUNT = 25; // Сколько вопросов в начале
+const EXTRA_QUESTIONS_PER_ERROR = 2; // Сколько добавлять за ошибку
 /* ===================================================================== */
 
-const ALL_QUESTIONS = [
+// БАЗА ДАННЫХ ИЗ 90 ВОПРОСОВ (30 старых + 60 новых)
+const ALL_QUESTIONS_BASE = [
+  // --- СТАРЫЕ 30 ВОПРОСОВ ---
   { part: "Часть 1. УК РО", text: "1. Какая статья УК РО относится к подследственности МВД (обозначение [Р])?", options: ["Ст. 6.2 (убийство) — [Ф/Р]","Ст. 12.1 (терроризм) — [Ф/С]","Ст. 10.1 (кража свыше 3 000 ₽) — [Р]","Ст. 7.1 (похищение человека) — [Ф]"], correct: 2 },
   { part: null, text: "2. Гражданин совершил кражу имущества стоимостью 4 500 ₽. По какой статье квалифицирует сотрудник МВД?", options: ["Ст. 10.1 (кража свыше 3 000 ₽)","Ст. 10.2 (кража свыше 5 000 ₽)","Ст. 10.3 (кража свыше 15 000 ₽)","Ст. 10.12 (кража с проникновением)"], correct: 0 },
   { part: null, text: "3. Сотрудник МВД задержал лицо по ст. 6.1 УК РО (телесные повреждения, ★★). Какой максимальный срок он может назначить в упрощённом порядке?", options: ["До 3 лет","До 5 лет","До 10 лет","До 20 месяцев"], correct: 1 },
@@ -787,13 +804,82 @@ const ALL_QUESTIONS = [
   { part: null, text: "27. В течение какого срока сотрудник, проводивший задержание, обязан хранить видеозапись оснований и самого задержания (гл. II ст. 10)?", options: ["12 часов","24 часа","48 часов","7 суток"], correct: 2 },
   { part: null, text: "28. Какой срок предварительного расследования установлен по общему правилу (гл. I ст. 13)?", options: ["До 24 часов","До 48 часов","До 96 часов","До 7 календарных дней"], correct: 2 },
   { part: null, text: "29. Сотрудник МВД проводит обыск транспортного средства. Что из перечисленного НЕ является достаточным основанием для полного обыска без дополнительных обстоятельств (гл. V ст. 3)?", options: ["Попытка водителя скрыться от законного требования об остановке","Наличие действующей ориентировки на транспортное средство","Обнаружение оружия у водителя","Отсутствие регистрационного знака само по себе"], correct: 3 },
-  { part: null, text: "30. Сотрудник МВД начал неотложный обыск жилища без предварительного судебного разрешения. В течение какого срока он обязан уведомить прокурора (гл. V ст. 2)?", options: ["Не позднее 1 часа с момента начала действия","Не позднее 3 часов","Не позднее 24 часов","Не позднее 48 часов"], correct: 0 }
+  { part: null, text: "30. Сотрудник МВД начал неотложный обыск жилища без предварительного судебного разрешения. В течение какого срока он обязан уведомить прокурора (гл. V ст. 2)?", options: ["Не позднее 1 часа с момента начала действия","Не позднее 3 часов","Не позднее 24 часов","Не позднее 48 часов"], correct: 0 },
+
+  // --- НОВЫЕ 60 ВОПРОСОВ ---
+  // УК РО Общая часть
+  { part: "УК РО", text: "31. Что является основанием уголовной ответственности согласно ст. 1.7 УК РО?", options: ["Совершение деяния, содержащего все признаки состава преступления","Признание вины подозреваемым","Наличие заявления потерпевшего","Решение прокурора"], correct: 0 },
+  { part: "УК РО", text: "32. Какое наказание НЕ влечет за собой возникновение судимости (ст. 1.9 УК РО)?", options: ["Лишение свободы","Уголовный штраф","Исправительные работы","Принудительные работы"], correct: 1 },
+  { part: "УК РО", text: "33. Что признается временем совершения преступления (ст. 1.10 УК РО)?", options: ["Время наступления последствий","Время совершения общественно опасного действия (бездействия)","Время обнаружения преступления","Время возбуждения уголовного дела"], correct: 1 },
+  { part: "УК РО", text: "34. Имеет ли обратную силу уголовный закон, усиливающий наказание (ст. 1.11 УК РО)?", options: ["Да, всегда","Нет","Только по решению суда","Только для несовершеннолетних"], correct: 1 },
+  { part: "УК РО", text: "35. Что признается преступлением согласно ст. 2 УК РО?", options: ["Виновно совершенное общественно опасное деяние, запрещенное Кодексом","Любое правонарушение","Деяние, причинившее материальный ущерб","Нарушение общественного порядка"], correct: 0 },
+  { part: "УК РО", text: "36. Какое преступление признается совершенным с косвенным умыслом (ст. 2.3 УК РО)?", options: ["Лицо предвидело последствия и желало их наступления","Лицо не предвидело последствий","Лицо предвидело последствия, не желало, но сознательно допускало","Лицо легкомысленно рассчитывало на предотвращение"], correct: 2 },
+  { part: "УК РО", text: "37. Какой максимальный срок наказания за приготовление к преступлению (ст. 5.2.1 УК РО)?", options: ["Половина максимального срока","Три четверти максимального срока","Полный срок","Одна треть максимального срока"], correct: 0 },
+  { part: "УК РО", text: "38. Что относится к отягчающим обстоятельствам (ст. 5.4 УК РО)?", options: ["Явка с повинной","Совершение преступления в состоянии опьянения","Помощь потерпевшему","Добровольное возмещение вреда"], correct: 1 },
+  { part: "УК РО", text: "39. Какой срок давности привлечения к уголовной ответственности (ст. 5.7 УК РО)?", options: ["5 дней","10 дней","15 дней","30 дней"], correct: 2 },
+  { part: "УК РО", text: "40. Кто вправе устанавливать уровень розыска (ст. 5.7 ч. 3 УК РО)?", options: ["Только суд","Сотрудники МВД/ФСБ","Только прокуратура","Только следственный комитет"], correct: 1 },
+  { part: "УК РО", text: "41. Какие наказания могут быть назначены в результате судебного процесса (ст. 5 УК РО)?", options: ["Только лишение свободы","Судебный штраф, уголовный штраф, лишение права занимать должности, увольнение, лишение свободы, исправительные работы, принудительные работы","Только штраф и лишение свободы","Только исправительные работы"], correct: 1 },
+  { part: "УК РО", text: "42. Кто уполномочен на назначение уголовного штрафа в рамках задержания (ст. 5 УК РО)?", options: ["Сотрудник МВД","Сотрудник ГИБДД","Прокуратура и Следственный комитет","Сотрудник ФСБ"], correct: 2 },
+  { part: "УК РО", text: "43. Что признается необходимым для освобождения от уголовной ответственности в связи с примирением сторон (ст. 5.6 УК РО)?", options: ["Только явка с повинной","Примирение с потерпевшим и заглаживание вреда","Только возмещение ущерба","Только признание вины"], correct: 1 },
+  { part: "УК РО", text: "44. Что происходит при неуплате судебного штрафа, назначенного в качестве освобождения от уголовной ответственности (ст. 5.6 УК РО)?", options: ["Штраф удваивается","Освобождение отменяется, лицо привлекается к ответственности","Назначается административный арест","Штраф заменяется на исправительные работы"], correct: 1 },
+  { part: "УК РО", text: "45. Что такое эксцесс исполнителя (ст. 3.7 УК РО)?", options: ["Совершение преступления группой лиц","Совершение исполнителем преступления, не охватывающегося умыслом соучастников","Отказ от совершения преступления","Добровольная сдача оружия"], correct: 1 },
+  { part: "УК РО", text: "46. Какие составы преступления относятся к материальным (ст. 1.8 УК РО)?", options: ["Включают только признаки деяния","Включают наличие общественно опасных последствий","Не включают последствий","Характеризуются только субъективной стороной"], correct: 1 },
+  { part: "УК РО", text: "47. Что НЕ является преступлением (ст. 2 УК РО)?", options: ["Кража","Действие, содержащее признаки деяния, но в силу малозначительности не представляющее опасности","Убийство","Грабеж"], correct: 1 },
+  { part: "УК РО", text: "48. Кто признается соучастником преступления (ст. 3.4 УК РО)?", options: ["Только исполнитель","Исполнитель, организатор, подстрекатель, пособник","Только организатор","Только пособник"], correct: 1 },
+  { part: "УК РО", text: "49. Какое наказание предусмотрено за уклонение от уплаты административного штрафа (ст. 11.8.1 УК РО)?", options: ["До 10 месяцев лишения свободы","До 30 месяцев лишения свободы","До 40 месяцев лишения свободы","До 50 месяцев лишения свободы"], correct: 1 },
+  { part: "УК РО", text: "50. К какому виду наказания относится лишение права занимать определенные должности (ст. 5 УК РО)?", options: ["Основное","Дополнительное","Альтернативное","Обязательное"], correct: 1 },
+  { part: "УК РО", text: "51. Что признается неоконченным преступлением (ст. 3 УК РО)?", options: ["Только приготовление","Приготовление и покушение","Только покушение","Оконченное преступление"], correct: 1 },
+  { part: "УК РО", text: "52. При каких условиях лицо не подлежит уголовной ответственности при добровольном отказе (ст. 3.2 УК РО)?", options: ["Если оно сообщило в полицию","Если оно добровольно и окончательно отказалось от доведения преступления до конца","Если оно возместило ущерб","Если оно признало вину"], correct: 1 },
+  { part: "УК РО", text: "53. В чем отличие кражи (ст. 10.1 УК РО) от грабежа (ст. 10.5 УК РО)?", options: ["Кража — тайное хищение, грабеж — открытое","Кража — открытое, грабеж — тайное","Кража — с насилием, грабеж — без","Кража — с проникновением, грабеж — без"], correct: 0 },
+  { part: "УК РО", text: "54. Что признается разбоем (ст. 10.6 УК РО)?", options: ["Тайное хищение","Открытое хищение без насилия","Нападение с применением насилия, опасного для жизни","Хищение с проникновением"], correct: 2 },
+  { part: "УК РО", text: "55. За какое преступление предусмотрена ответственность по ст. 12.8 УК РО?", options: ["Незаконный оборот оружия","Терроризм","Массовые беспорядки","Похищение человека"], correct: 0 },
+  { part: "УК РО", text: "56. Что является предметом преступления по ст. 13.1 УК РО?", options: ["Оружие","Наркотические вещества","Документы","Государственная тайна"], correct: 1 },
+  { part: "УК РО", text: "57. Кто может быть субъектом преступления по ст. 14.5 УК РО (государственная измена)?", options: ["Только гражданин РО","Гражданин РО или иностранный гражданин","Только военнослужащий","Только госслужащий"], correct: 1 },
+  { part: "УК РО", text: "58. Какое преступление относится к особо тяжким (ст. 15.1 УК РО)?", options: ["Кража","Превышение должностных полномочий","Мелкое хулиганство","Уклонение от уплаты штрафа"], correct: 1 },
+  { part: "УК РО", text: "59. Что такое рецидив преступлений (ст. 2.1 УК РО)?", options: ["Совершение преступления впервые","Совершение умышленного преступления лицом, имеющим судимость","Совершение преступления по неосторожности","Совершение преступления группой лиц"], correct: 1 },
+  { part: "УК РО", text: "60. Что понимается под объектом преступления (ст. 1.8 УК РО)?", options: ["Лицо, совершившее преступление","Общественные отношения, которым причиняется ущерб","Орудие совершения преступления","Последствия преступления"], correct: 1 },
+
+  // Процессуальный кодекс
+  { part: "Процессуальный кодекс", text: "61. В каких случаях сотрудник обязан инициировать процессуальную проверку (гл. I ст. 1 ПК РО)?", options: ["Только при заявлении гражданина","При непосредственном обнаружении правонарушения, сообщении очевидцев, обнаружении следов или регистрации заявления","Только по указанию начальника","Только при наличии потерпевшего"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "62. Что входит в перечень следственных действий (гл. I ст. 5 ПК РО)?", options: ["Только допрос","Только обыск","Допрос, осмотр, обыск, выемка, задержание и др.","Только задержание"], correct: 2 },
+  { part: "Процессуальный кодекс", text: "63. Что относится к оперативно-розыскным мероприятиям (гл. I ст. 6.1 ПК РО)?", options: ["Только наблюдение","Только опрос","Опрос, наведение справок, контрольная закупка, наблюдение и др.","Только контрольная закупка"], correct: 2 },
+  { part: "Процессуальный кодекс", text: "64. Для чего могут применяться наручники (гл. I ст. 6.3 ПК РО)?", options: ["Для наказания","Для законного задержания, привода и иных мер процессуального принуждения","Для устрашения","Для личного удобства сотрудника"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "65. Что понимается под процессуальным действием (гл. I ст. 7 ПК РО)?", options: ["Любое действие сотрудника","Действие, непосредственно затрагивающее права и свободы лица","Только задержание","Только обыск"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "66. Чем досмотр отличается от обыска (гл. I ст. 7.1.1 ПК РО)?", options: ["Досмотр проводится с согласия, обыск — без согласия","Досмотр — без согласия, обыск — с согласия","Досмотр только на улице, обыск — в помещении","Досмотр только личный, обыск — только транспортного средства"], correct: 0 },
+  { part: "Процессуальный кодекс", text: "67. На какой максимальный срок допускается задержание лица (гл. II ПК РО)?", options: ["До 1 часа","До 3 часов","До 24 часов","До 48 часов"], correct: 0 },
+  { part: "Процессуальный кодекс", text: "68. Какое основание для задержания предусмотрено ПК РО?", options: ["Только задержание на месте преступления","Лицо застигнуто при совершении, имеет следы, есть 3 свидетеля, фото/видео, ориентировка и др.","Только наличие ориентировки","Только по заявлению потерпевшего"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "69. В течение какого срока сотрудник обязан уведомить прокурора при неотложном обыске жилища (гл. V ПК РО)?", options: ["1 час","3 часа","24 часа","48 часов"], correct: 0 },
+  { part: "Процессуальный кодекс", text: "70. Что происходит, если при задержании госслужащего прокурор и следователь СК не прибыли в срок (гл. II ПК РО)?", options: ["Задержанный остается под стражей","Задержанный освобождается, материалы направляются в прокуратуру и СК","Сотрудник МВД сам решает вопрос","Задержанный передается ФСБ"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "71. Сколько времени отводится на ожидание государственного адвоката (гл. II ПК РО)?", options: ["1 минута","3 минуты","5 минут","10 минут"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "72. Что происходит, если задержанный заявил о желании воспользоваться частным адвокатом (гл. II ПК РО)?", options: ["Процессуальный час приостанавливается на 10 минут","Процессуальный час не приостанавливается","Процессуальный час приостанавливается на 30 минут","Задержанный освобождается"], correct: 0 },
+  { part: "Процессуальный кодекс", text: "73. Кто обязан прибыть при задержании государственного служащего (гл. II ПК РО)?", options: ["Только адвокат","Прокурор и следователь Следственного комитета","Только представитель начальства","Только сотрудник ФСБ"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "74. В течение какого срока прокурор и следователь СК обязаны принять вызов (гл. II ПК РО)?", options: ["3 минуты","5 минут","10 минут","15 минут"], correct: 1 },
+  { part: "Процессуальный кодекс", text: "75. Какой срок предварительного расследования установлен по общему правилу (гл. I ПК РО)?", options: ["24 часа","48 часов","96 часов","7 суток"], correct: 2 },
+  { part: "Процессуальный кодекс", text: "76. В течение какого срока сотрудник обязан хранить видеозапись задержания (гл. II ПК РО)?", options: ["12 часов","24 часа","48 часов","7 суток"], correct: 2 },
+  { part: "Процессуальный кодекс", text: "77. Что НЕ является достаточным основанием для полного обыска транспортного средства (гл. V ПК РО)?", options: ["Попытка скрыться","Ориентировка","Обнаружение оружия","Отсутствие регистрационного знака"], correct: 3 },
+  { part: "Процессуальный кодекс", text: "78. Какие действия относятся к следственным (гл. I ПК РО)?", options: ["Только задержание","Только допрос","Возбуждение дела, допрос, осмотр, обыск, выемка и др.","Только обыск"], correct: 2 },
+
+  // КоАП РО
+  { part: "КоАП РО", text: "79. Какое наказание предусмотрено за мелкое хулиганство (ст. 7.1 КоАП РО)?", options: ["Штраф 5 000–15 000 ₽ или арест до 10 суток","Штраф 15 000–30 000 ₽ или арест до 10 суток","Только штраф 5 000 ₽","Только арест до 15 суток"], correct: 0 },
+  { part: "КоАП РО", text: "80. Какое наказание предусмотрено за нахождение в состоянии опьянения в общественном месте (ст. 7.4 КоАП РО)?", options: ["Штраф 5 000–15 000 ₽ или арест до 5 суток","Только штраф 15 000 ₽","Арест до 15 суток","Лишение специального права"], correct: 0 },
+  { part: "КоАП РО", text: "81. В течение какого срока лицо не подлежит административной ответственности (ст. 4.5 КоАП РО)?", options: ["3 дня","5 дней","10 дней","15 дней"], correct: 1 },
+  { part: "КоАП РО", text: "82. Кто вправе рассматривать дела об административных правонарушениях (ст. 5.1 КоАП РО)?", options: ["Только суд","Прокуратура, МВД, ГИБДД в пределах компетенции","Только МВД","Только прокуратура"], correct: 1 },
+  { part: "КоАП РО", text: "83. В течение какого срока сотрудник обязан предоставить материалы по жалобе (ст. 5.5 КоАП РО)?", options: ["12 часов","24 часа","48 часов","72 часа"], correct: 1 },
+  { part: "КоАП РО", text: "84. Что происходит, если сотрудник не предоставил материалы по жалобе в срок (ст. 5.5 КоАП РО)?", options: ["Жалоба отклоняется","Назначается повторное рассмотрение","Штраф возвращается","Решение отменяется, производство прекращается"], correct: 3 },
+  { part: "КоАП РО", text: "85. Может ли сотрудник МВД назначить административный арест по ст. 6.1 КоАП РО?", options: ["Да, до 10 суток","Нет, только суд","Да, с санкции прокурора","Да, если нарушение повторное"], correct: 1 },
+  { part: "КоАП РО", text: "86. Как назначается наказание при совершении двух административных правонарушений (ст. 4.4 КоАП РО)?", options: ["Только за более тяжкое","За каждое, но итог не может обходить максимальные пределы Кодекса","Только предупреждение","Наказание не назначается"], correct: 1 },
+  { part: "КоАП РО", text: "87. Что признается административным правонарушением (ст. 2.1 КоАП РО)?", options: ["Только преступление","Противоправное и виновное действие или бездействие, за которое предусмотрена ответственность","Только нарушение ПДД","Только нарушение общественного порядка"], correct: 1 },
+  { part: "КоАП РО", text: "88. Какой максимальный срок административного ареста (ст. 3.5 КоАП РО)?", options: ["5 суток","10 суток","15 суток","30 суток"], correct: 2 },
+  { part: "КоАП РО", text: "89. Кто может освободить от административной ответственности при малозначительности (ст. 2.6 КоАП РО)?", options: ["Только суд","Судья, прокурор, орган или должностное лицо","Только прокурор","Только сотрудник МВД"], correct: 1 },
+  { part: "КоАП РО", text: "90. Что является уклонением от уплаты административного штрафа (ст. 5.6 КоАП РО)?", options: ["Только прямой отказ","Неуплата на месте, отсутствие средств или прямой отказ","Только отсутствие средств","Только неуплата в течение 30 дней"], correct: 1 }
 ];
 
-let QUESTIONS = [...ALL_QUESTIONS];
+let QUESTIONS = []; // Текущий список вопросов в тесте
+let allQuestionsPool = []; // Пул оставшихся вопросов для добавления
 const LETTERS = ['A', 'B', 'C', 'D'];
 let userData = { name: '', surname: '', static: '', udo: null, plan: null };
-let answers = new Array(QUESTIONS.length).fill(null);
+let answers = [];
+let errorCount = 0;
 let currentStep = 0;
 let stepLocked = false;
 let timeLeft = TEST_TIME_MINUTES * 60; 
@@ -802,8 +888,7 @@ let tickInterval = null;
 let reviewData = [];
 let cheatStrikes = 0;
 let isTestActive = false;
-let isShuffled = false;
-let allowExtraMinute = true; // Флаг для "Отмены" штрафа
+let allowExtraMinute = true;
 
 let touchStartX = 0;
 let touchEndX = 0;
@@ -849,6 +934,13 @@ function playSound(type) {
       gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
       osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    } else if (type === 'error') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.3);
     }
   } catch(e) {}
 }
@@ -869,64 +961,6 @@ function showToast(msg, action = null) {
   setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-/* Автосохранение прогресса */
-function saveProgress() {
-  if (!isTestActive) return;
-  try {
-    const data = {
-      userData,
-      answers,
-      currentStep,
-      timeLeft,
-      isShuffled,
-      qIds: QUESTIONS.map(q => ALL_QUESTIONS.indexOf(q))
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-  } catch(e) {}
-}
-
-function checkSave() {
-  try {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
-      const data = JSON.parse(saved);
-      if (data.answers && data.answers.length === 30) {
-        document.getElementById('btnResume').style.display = 'block';
-      }
-    }
-  } catch(e) {}
-}
-
-function resumeTest() {
-  try {
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (!saved) return;
-    const data = JSON.parse(saved);
-    
-    userData = data.userData;
-    // Восстанавливаем вопросы по ID
-    QUESTIONS = data.qIds.map(id => ALL_QUESTIONS[id]);
-    answers = data.answers;
-    currentStep = data.currentStep;
-    timeLeft = data.timeLeft;
-    isShuffled = data.isShuffled;
-    
-    document.getElementById('screen-auth').classList.add('hidden');
-    document.getElementById('screen-test').classList.remove('hidden');
-    document.getElementById('userLabel').textContent = `${userData.name} ${userData.surname} · ${userData.static}`;
-    document.getElementById('stepTotal').textContent = QUESTIONS.length;
-    
-    if (isShuffled) document.getElementById('shuffleBtn').classList.add('active');
-    
-    isTestActive = true;
-    renderStep();
-    startTimer();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch(e) {
-    showToast('Ошибка восстановления');
-  }
-}
-
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   document.getElementById('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
@@ -940,32 +974,7 @@ function toggleTheme() {
   let saved = 'dark';
   try { saved = localStorage.getItem('test-theme') || 'dark'; } catch(e) {}
   applyTheme(saved);
-  checkSave();
 })();
-
-function toggleShuffle() {
-  isShuffled = !isShuffled;
-  document.getElementById('shuffleBtn').classList.toggle('active', isShuffled);
-  if (isShuffled) {
-    QUESTIONS = [...ALL_QUESTIONS].sort(() => Math.random() - 0.5);
-    answers = new Array(QUESTIONS.length).fill(null);
-    if (isTestActive) {
-      showToast('🔀 Вопросы перемешаны!');
-      currentStep = 0;
-      renderStep();
-      saveProgress();
-    }
-  } else {
-    QUESTIONS = [...ALL_QUESTIONS];
-    answers = new Array(QUESTIONS.length).fill(null);
-    if (isTestActive) {
-      showToast('🔄 Восстановлен стандартный порядок');
-      currentStep = 0;
-      renderStep();
-      saveProgress();
-    }
-  }
-}
 
 document.addEventListener("visibilitychange", () => {
   if (!isTestActive) return;
@@ -977,7 +986,6 @@ document.addEventListener("visibilitychange", () => {
     const s = (timeLeft % 60).toString().padStart(2, '0');
     document.getElementById('timerDisplay').textContent = `${m}:${s}`;
 
-    // Показываем тост с возможностью отменить штраф
     if (allowExtraMinute) {
       showToast(`⚠️ Штраф: -1 мин. (${cheatStrikes}/3)`, {
         text: 'Вернуть минуту',
@@ -1016,6 +1024,16 @@ window.addEventListener('scroll', () => {
   else btnUp.classList.remove('show');
 });
 
+function updateErrorCounter() {
+  const el = document.getElementById('errorCounter');
+  el.textContent = `❌ Ошибки: ${errorCount} / ${MAX_ERRORS}`;
+  if (errorCount >= MAX_ERRORS - 1) {
+    el.classList.add('danger');
+  } else {
+    el.classList.remove('danger');
+  }
+}
+
 function startTimer() {
   const timerDisplay = document.getElementById('timerDisplay');
   timerInterval = setInterval(() => {
@@ -1042,8 +1060,6 @@ function startTimer() {
     } else {
       fill.style.backgroundColor = 'var(--green)';
     }
-    
-    if (timeLeft % 10 === 0) saveProgress();
   }, 1000);
 
   tickInterval = setInterval(() => {
@@ -1051,6 +1067,14 @@ function startTimer() {
       playSound('tick');
     }
   }, 1000);
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 function startTest() {
@@ -1065,21 +1089,42 @@ function startTest() {
     showToast('⚠️ Заполните все поля!');
     return;
   }
-  
-  localStorage.removeItem(SAVE_KEY); // Очищаем старое сохранение
-  document.getElementById('btnResume').style.display = 'none';
 
   userData = { name, surname, static: staticVal, udo: udoFile, plan: planFile };
+  
+  // Подготовка пула вопросов
+  let fullPool = shuffleArray([...ALL_QUESTIONS_BASE]);
+  
+  // Отбираем 25 для старта
+  QUESTIONS = fullPool.slice(0, INITIAL_QUESTIONS_COUNT);
+  // Остальные - в резерв для добавления
+  allQuestionsPool = fullPool.slice(INITIAL_QUESTIONS_COUNT);
+  
+  answers = new Array(QUESTIONS.length).fill(null);
+  errorCount = 0;
+  currentStep = 0;
+  
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-test').classList.remove('hidden');
   document.getElementById('userLabel').textContent = `${userData.name} ${userData.surname} · ${userData.static}`;
   document.getElementById('stepTotal').textContent = QUESTIONS.length;
-  currentStep = 0;
   isTestActive = true;
+  updateErrorCounter();
   renderStep();
   startTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   playSound('click');
+}
+
+function addExtraQuestions(count) {
+  for (let i = 0; i < count; i++) {
+    if (allQuestionsPool.length > 0) {
+      const extraQ = allQuestionsPool.shift(); // берем случайный из оставшихся
+      QUESTIONS.push(extraQ);
+      answers.push(null); // добавляем пустой ответ для нового вопроса
+    }
+  }
+  document.getElementById('stepTotal').textContent = QUESTIONS.length;
 }
 
 function renderStep() {
@@ -1127,10 +1172,10 @@ function renderStep() {
   document.getElementById('nextBtn').disabled = selected === null;
   
   touchStartX = 0;
-  saveProgress();
 }
 
 function createRipple(event, element) {
+  if (element.classList.contains('selected')) return;
   const ripple = document.createElement("span");
   ripple.classList.add("ripple");
   element.appendChild(ripple);
@@ -1143,15 +1188,41 @@ function createRipple(event, element) {
 }
 
 function pickOption(oIdx) {
+  if (answers[currentStep] !== null) return;
+
   answers[currentStep] = oIdx;
+  const q = QUESTIONS[currentStep];
+  
+  if (oIdx !== q.correct) {
+    errorCount++;
+    playSound('error');
+    updateErrorCounter();
+    
+    document.body.style.boxShadow = 'inset 0 0 150px rgba(239,68,68,0.5)';
+    setTimeout(() => document.body.style.boxShadow = '', 300);
+    
+    // Добавляем вопросы за каждую ошибку
+    addExtraQuestions(EXTRA_QUESTIONS_PER_ERROR);
+    
+    if (errorCount >= MAX_ERRORS) {
+      showToast(`🛑 ПРЕВЫШЕН ЛИМИТ ОШИБОК (${MAX_ERRORS}/${MAX_ERRORS})! Тест завершен.`);
+      setTimeout(() => finishTest(true, false, true), 1000);
+      return;
+    } else if (errorCount === MAX_ERRORS - 1) {
+      showToast(`⚠️ Внимание! Осталась всего 1 ошибка до завершения!`);
+    } else {
+      showToast(`❌ Ошибка! Всего ошибок: ${errorCount} / ${MAX_ERRORS}. Добавлено 2 вопроса.`);
+    }
+  } else {
+    playSound('click');
+  }
+
   document.querySelectorAll('#optionsBox .option').forEach((el, i) => {
     el.classList.toggle('selected', i === oIdx);
   });
   document.getElementById('nextBtn').disabled = false;
   const fill = ((currentStep + 1) / QUESTIONS.length) * 100;
   document.getElementById('stepFill').style.width = fill + '%';
-  playSound('click');
-  saveProgress();
 }
 
 function nextStep() {
@@ -1173,7 +1244,7 @@ function prevStep() {
 }
 
 function confirmGiveUp() {
-  if (confirm('Вы уверены, что хотите сдаться? Все неотвеченные вопросы будут засчитаны как ошибки.')) {
+  if (confirm('Вы уверены, что хотите сдаться?')) {
     finishTest(true);
   }
 }
@@ -1209,13 +1280,12 @@ function shootConfetti() {
   }
 }
 
-function finishTest(forceFinish = false, isCheated = false) {
+function finishTest(forceFinish = false, isCheated = false, isLimitReached = false) {
   if (!forceFinish && answers.includes(null)) {
     if (!confirm(`Вы не ответили на все вопросы. Завершить?`)) return;
   }
 
   isTestActive = false;
-  localStorage.removeItem(SAVE_KEY); // Удаляем прогресс после завершения
   if (timerInterval) clearInterval(timerInterval);
   if (tickInterval) clearInterval(tickInterval);
   playSound('success');
@@ -1223,7 +1293,6 @@ function finishTest(forceFinish = false, isCheated = false) {
   let score = 0;
   reviewData = [];
   
-  // Считаем правильные по частям
   let partsStats = {
     "Часть 1. УК РО": { correct: 0, total: 0 },
     "Часть 2. Задержание": { correct: 0, total: 0 },
@@ -1239,7 +1308,6 @@ function finishTest(forceFinish = false, isCheated = false) {
     const isCorrect = (!isCheated && userAns === q.correct);
     if (isCorrect) score++;
     
-    // Статистика по частям
     if (partsStats[currentPartName]) {
       partsStats[currentPartName].total++;
       if (isCorrect) partsStats[currentPartName].correct++;
@@ -1259,6 +1327,11 @@ function finishTest(forceFinish = false, isCheated = false) {
   document.getElementById('progressBar').style.width = '0%';
   document.getElementById('screen-result').classList.remove('hidden');
 
+  let resultTitle = 'Тест завершён';
+  if (isLimitReached) resultTitle = '❌ ПРЕВЫШЕН ЛИМИТ ОШИБОК';
+  else if (isCheated) resultTitle = '🚨 ТЕСТ АННУЛИРОВАН';
+  
+  document.getElementById('resultTitle').textContent = resultTitle;
   document.getElementById('resultUser').textContent = `${userData.name} ${userData.surname} | ${userData.static}` + (isCheated ? ' [АННУЛИРОВАНО]' : '');
   document.getElementById('avatarCircle').textContent = userData.name.charAt(0).toUpperCase();
   
@@ -1277,7 +1350,7 @@ function finishTest(forceFinish = false, isCheated = false) {
   const percent = Math.round((score / QUESTIONS.length) * 100);
   const wrongCount = QUESTIONS.length - score;
   
-  if (!isCheated && percent >= 75) {
+  if (!isCheated && !isLimitReached && percent >= 75) {
     setTimeout(shootConfetti, 300);
   }
   
@@ -1299,18 +1372,21 @@ function finishTest(forceFinish = false, isCheated = false) {
 
   const gradeDisplay = document.getElementById('gradeDisplay');
   let gradeText = '', gradeColor = 'var(--accent)';
-  if (isCheated) { gradeText = 'АННУЛИРОВАНО'; gradeColor = 'var(--red)'; }
+  
+  if (isLimitReached) { gradeText = 'ЛИМИТ ОШИБОК'; gradeColor = 'var(--red)'; }
+  else if (isCheated) { gradeText = 'АННУЛИРОВАНО'; gradeColor = 'var(--red)'; }
   else if (percent >= 90) { gradeText = 'Отлично'; gradeColor = 'var(--green)'; }
   else if (percent >= 75) { gradeText = 'Хорошо'; gradeColor = 'var(--accent)'; }
   else if (percent >= 60) { gradeText = 'Удовлетворительно'; gradeColor = 'var(--gold)'; }
   else { gradeText = 'Неудовлетворительно'; gradeColor = 'var(--red)'; }
+  
   gradeDisplay.textContent = `${gradeText}`;
   gradeDisplay.style.color = gradeColor;
 
   renderReview('all');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   
-  sendToDiscord(score, percent, gradeText, reviewData, isCheated, partsStats);
+  sendToDiscord(score, percent, gradeText, reviewData, isCheated || isLimitReached, partsStats);
 }
 
 function renderReview(filterType = 'all') {
@@ -1457,7 +1533,6 @@ function buildTxtReport(score, percent, gradeText, reviewItems, isCheated) {
   return lines.join('\n');
 }
 
-/* Блокировка кнопки отправки */
 let isSending = false;
 
 async function sendToDiscord(score, percent, gradeText, reviewItems, isCheated, partsStats) {
@@ -1502,10 +1577,10 @@ async function sendToDiscord(score, percent, gradeText, reviewItems, isCheated, 
     { name: '❌ Неправильных', value: `**${wrongCount}**`, inline: true },
     { name: '📊 Процент', value: `**${percent}%**`, inline: true },
     { name: '🏆 Оценка', value: gradeText, inline: false },
-    { name: '⏱️ Время', value: `${min} мин ${sec} сек`, inline: true }
+    { name: '⏱️ Время', value: `${min} мин ${sec} сек`, inline: true },
+    { name: '📋 Всего вопросов', value: `${QUESTIONS.length}`, inline: true }
   ];
   
-  // Анализ по частям
   let partsText = '';
   for (const [name, data] of Object.entries(partsStats)) {
     if (data.total > 0) {
@@ -1517,7 +1592,7 @@ async function sendToDiscord(score, percent, gradeText, reviewItems, isCheated, 
   }
   
   if (isCheated) {
-    fields.push({ name: '🚨 ВНИМАНИЕ', value: '**АННУЛИРОВАНО**', inline: false });
+    fields.push({ name: '🚨 ВНИМАНИЕ', value: '**АННУЛИРОВАНО (ЛИМИТ ОШИБОК)**', inline: false });
   }
 
   const payload = {
