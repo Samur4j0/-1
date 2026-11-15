@@ -743,7 +743,7 @@
 
       <div class="review-section">
         <div class="review-header">
-          <h3>Разбор</h3>
+          <h3>Разбор (только отвеченные)</h3>
           <div class="filter-btns">
             <button class="filter-btn active" onclick="filterReview('all', this)">Все</button>
             <button class="filter-btn" onclick="filterReview('wrong', this)">Ошибки</button>
@@ -767,12 +767,11 @@
 const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1569418780034080888/qcI36aXdBbEUFt9JsSrcoIii7RmtzKtbwJUYhO4vI3hFAPu7Oe8wKr-owey6KUOTULJ3";
 const NOTIFY_USER_ID = "535387398587154442,657932083410239488,1354521931914805429,623187321700745226"; 
 const TEST_TIME_MINUTES = 25;
-const MAX_ERRORS = 5; // Максимальное количество ошибок
-const INITIAL_QUESTIONS_COUNT = 25; // Сколько вопросов в начале
-const EXTRA_QUESTIONS_PER_ERROR = 2; // Сколько добавлять за ошибку
+const MAX_ERRORS = 5;
+const INITIAL_QUESTIONS_COUNT = 25;
+const EXTRA_QUESTIONS_PER_ERROR = 2;
 /* ===================================================================== */
 
-// БАЗА ДАННЫХ ИЗ 90 ВОПРОСОВ (30 старых + 60 новых)
 const ALL_QUESTIONS_BASE = [
   // --- СТАРЫЕ 30 ВОПРОСОВ ---
   { part: "Часть 1. УК РО", text: "1. Какая статья УК РО относится к подследственности МВД (обозначение [Р])?", options: ["Ст. 6.2 (убийство) — [Ф/Р]","Ст. 12.1 (терроризм) — [Ф/С]","Ст. 10.1 (кража свыше 3 000 ₽) — [Р]","Ст. 7.1 (похищение человека) — [Ф]"], correct: 2 },
@@ -807,7 +806,6 @@ const ALL_QUESTIONS_BASE = [
   { part: null, text: "30. Сотрудник МВД начал неотложный обыск жилища без предварительного судебного разрешения. В течение какого срока он обязан уведомить прокурора (гл. V ст. 2)?", options: ["Не позднее 1 часа с момента начала действия","Не позднее 3 часов","Не позднее 24 часов","Не позднее 48 часов"], correct: 0 },
 
   // --- НОВЫЕ 60 ВОПРОСОВ ---
-  // УК РО Общая часть
   { part: "УК РО", text: "31. Что является основанием уголовной ответственности согласно ст. 1.7 УК РО?", options: ["Совершение деяния, содержащего все признаки состава преступления","Признание вины подозреваемым","Наличие заявления потерпевшего","Решение прокурора"], correct: 0 },
   { part: "УК РО", text: "32. Какое наказание НЕ влечет за собой возникновение судимости (ст. 1.9 УК РО)?", options: ["Лишение свободы","Уголовный штраф","Исправительные работы","Принудительные работы"], correct: 1 },
   { part: "УК РО", text: "33. Что признается временем совершения преступления (ст. 1.10 УК РО)?", options: ["Время наступления последствий","Время совершения общественно опасного действия (бездействия)","Время обнаружения преступления","Время возбуждения уголовного дела"], correct: 1 },
@@ -838,8 +836,6 @@ const ALL_QUESTIONS_BASE = [
   { part: "УК РО", text: "58. Какое преступление относится к особо тяжким (ст. 15.1 УК РО)?", options: ["Кража","Превышение должностных полномочий","Мелкое хулиганство","Уклонение от уплаты штрафа"], correct: 1 },
   { part: "УК РО", text: "59. Что такое рецидив преступлений (ст. 2.1 УК РО)?", options: ["Совершение преступления впервые","Совершение умышленного преступления лицом, имеющим судимость","Совершение преступления по неосторожности","Совершение преступления группой лиц"], correct: 1 },
   { part: "УК РО", text: "60. Что понимается под объектом преступления (ст. 1.8 УК РО)?", options: ["Лицо, совершившее преступление","Общественные отношения, которым причиняется ущерб","Орудие совершения преступления","Последствия преступления"], correct: 1 },
-
-  // Процессуальный кодекс
   { part: "Процессуальный кодекс", text: "61. В каких случаях сотрудник обязан инициировать процессуальную проверку (гл. I ст. 1 ПК РО)?", options: ["Только при заявлении гражданина","При непосредственном обнаружении правонарушения, сообщении очевидцев, обнаружении следов или регистрации заявления","Только по указанию начальника","Только при наличии потерпевшего"], correct: 1 },
   { part: "Процессуальный кодекс", text: "62. Что входит в перечень следственных действий (гл. I ст. 5 ПК РО)?", options: ["Только допрос","Только обыск","Допрос, осмотр, обыск, выемка, задержание и др.","Только задержание"], correct: 2 },
   { part: "Процессуальный кодекс", text: "63. Что относится к оперативно-розыскным мероприятиям (гл. I ст. 6.1 ПК РО)?", options: ["Только наблюдение","Только опрос","Опрос, наведение справок, контрольная закупка, наблюдение и др.","Только контрольная закупка"], correct: 2 },
@@ -858,8 +854,6 @@ const ALL_QUESTIONS_BASE = [
   { part: "Процессуальный кодекс", text: "76. В течение какого срока сотрудник обязан хранить видеозапись задержания (гл. II ПК РО)?", options: ["12 часов","24 часа","48 часов","7 суток"], correct: 2 },
   { part: "Процессуальный кодекс", text: "77. Что НЕ является достаточным основанием для полного обыска транспортного средства (гл. V ПК РО)?", options: ["Попытка скрыться","Ориентировка","Обнаружение оружия","Отсутствие регистрационного знака"], correct: 3 },
   { part: "Процессуальный кодекс", text: "78. Какие действия относятся к следственным (гл. I ПК РО)?", options: ["Только задержание","Только допрос","Возбуждение дела, допрос, осмотр, обыск, выемка и др.","Только обыск"], correct: 2 },
-
-  // КоАП РО
   { part: "КоАП РО", text: "79. Какое наказание предусмотрено за мелкое хулиганство (ст. 7.1 КоАП РО)?", options: ["Штраф 5 000–15 000 ₽ или арест до 10 суток","Штраф 15 000–30 000 ₽ или арест до 10 суток","Только штраф 5 000 ₽","Только арест до 15 суток"], correct: 0 },
   { part: "КоАП РО", text: "80. Какое наказание предусмотрено за нахождение в состоянии опьянения в общественном месте (ст. 7.4 КоАП РО)?", options: ["Штраф 5 000–15 000 ₽ или арест до 5 суток","Только штраф 15 000 ₽","Арест до 15 суток","Лишение специального права"], correct: 0 },
   { part: "КоАП РО", text: "81. В течение какого срока лицо не подлежит административной ответственности (ст. 4.5 КоАП РО)?", options: ["3 дня","5 дней","10 дней","15 дней"], correct: 1 },
@@ -874,8 +868,8 @@ const ALL_QUESTIONS_BASE = [
   { part: "КоАП РО", text: "90. Что является уклонением от уплаты административного штрафа (ст. 5.6 КоАП РО)?", options: ["Только прямой отказ","Неуплата на месте, отсутствие средств или прямой отказ","Только отсутствие средств","Только неуплата в течение 30 дней"], correct: 1 }
 ];
 
-let QUESTIONS = []; // Текущий список вопросов в тесте
-let allQuestionsPool = []; // Пул оставшихся вопросов для добавления
+let QUESTIONS = []; 
+let allQuestionsPool = []; 
 const LETTERS = ['A', 'B', 'C', 'D'];
 let userData = { name: '', surname: '', static: '', udo: null, plan: null };
 let answers = [];
@@ -893,21 +887,7 @@ let allowExtraMinute = true;
 let touchStartX = 0;
 let touchEndX = 0;
 
-/* Проверка интернета */
-const netDot = document.getElementById('netStatus');
-function updateNetStatus() {
-  if (navigator.onLine) {
-    netDot.classList.remove('offline');
-    netDot.title = 'Онлайн';
-  } else {
-    netDot.classList.add('offline');
-    netDot.title = 'Оффлайн';
-  }
-}
-window.addEventListener('online', () => { updateNetStatus(); showToast('✅ Интернет восстановлен'); });
-window.addEventListener('offline', () => { updateNetStatus(); showToast('❌ Нет сети!'); });
-updateNetStatus();
-
+/* Оптимизация звука */
 let audioCtx = null;
 function playSound(type) {
   try {
@@ -1092,12 +1072,9 @@ function startTest() {
 
   userData = { name, surname, static: staticVal, udo: udoFile, plan: planFile };
   
-  // Подготовка пула вопросов
   let fullPool = shuffleArray([...ALL_QUESTIONS_BASE]);
   
-  // Отбираем 25 для старта
   QUESTIONS = fullPool.slice(0, INITIAL_QUESTIONS_COUNT);
-  // Остальные - в резерв для добавления
   allQuestionsPool = fullPool.slice(INITIAL_QUESTIONS_COUNT);
   
   answers = new Array(QUESTIONS.length).fill(null);
@@ -1119,9 +1096,9 @@ function startTest() {
 function addExtraQuestions(count) {
   for (let i = 0; i < count; i++) {
     if (allQuestionsPool.length > 0) {
-      const extraQ = allQuestionsPool.shift(); // берем случайный из оставшихся
+      const extraQ = allQuestionsPool.shift();
       QUESTIONS.push(extraQ);
-      answers.push(null); // добавляем пустой ответ для нового вопроса
+      answers.push(null);
     }
   }
   document.getElementById('stepTotal').textContent = QUESTIONS.length;
@@ -1201,7 +1178,6 @@ function pickOption(oIdx) {
     document.body.style.boxShadow = 'inset 0 0 150px rgba(239,68,68,0.5)';
     setTimeout(() => document.body.style.boxShadow = '', 300);
     
-    // Добавляем вопросы за каждую ошибку
     addExtraQuestions(EXTRA_QUESTIONS_PER_ERROR);
     
     if (errorCount >= MAX_ERRORS) {
@@ -1301,6 +1277,7 @@ function finishTest(forceFinish = false, isCheated = false, isLimitReached = fal
   };
   let currentPartName = "Часть 1. УК РО";
 
+  // Формируем разбор ТОЛЬКО для отвеченных вопросов
   QUESTIONS.forEach((q, idx) => {
     if (q.part) currentPartName = q.part;
     
@@ -1313,14 +1290,17 @@ function finishTest(forceFinish = false, isCheated = false, isLimitReached = fal
       if (isCorrect) partsStats[currentPartName].correct++;
     }
 
-    reviewData.push({
-      num: idx + 1, text: q.text,
-      userAnsIdx: userAns,
-      correctIdx: q.correct,
-      userAnswerText: userAns !== null ? `${LETTERS[userAns]}) ${q.options[userAns]}` : '— (нет ответа)',
-      correctAnswerText: `${LETTERS[q.correct]}) ${q.options[q.correct]}`,
-      isCorrect
-    });
+    // Добавляем в разбор только если ответ дан (и не был "сдан" принудительно)
+    if (userAns !== null || forceFinish) {
+      reviewData.push({
+        num: idx + 1, text: q.text,
+        userAnsIdx: userAns,
+        correctIdx: q.correct,
+        userAnswerText: userAns !== null ? `${LETTERS[userAns]}) ${q.options[userAns]}` : '— (нет ответа)',
+        correctAnswerText: `${LETTERS[q.correct]}) ${q.options[q.correct]}`,
+        isCorrect
+      });
+    }
   });
 
   document.getElementById('screen-test').classList.add('hidden');
@@ -1393,6 +1373,12 @@ function renderReview(filterType = 'all') {
   const container = document.getElementById('reviewList');
   container.innerHTML = '';
   
+  // Если reviewData пуст (например, сдался сразу), показываем сообщение
+  if (reviewData.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-muted);">Вы не ответили ни на один вопрос.</div>';
+    return;
+  }
+
   const filtered = reviewData.filter(item => {
     if (filterType === 'wrong') return !item.isCorrect;
     if (filterType === 'correct') return item.isCorrect;
